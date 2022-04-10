@@ -1,4 +1,4 @@
-function [sc_x, sc_y, el_x, el_y, el_params] = calc_scatter_ellipse(intervals)
+function [sc_x, sc_y, el_x, el_y, el_params, V, c, a, b] = calc_scatter_ellipse(intervals)
     sc_x = intervals(1 : end - 1);
     sc_y = intervals(2 : end);
     
@@ -11,8 +11,20 @@ function [sc_x, sc_y, el_x, el_y, el_params] = calc_scatter_ellipse(intervals)
     [V, D] = eig(A);
     
     % Полуоси эллипса
-    a = 1 / sqrt(D(1, 1));
-    b = 1 / sqrt(D(2, 2));
+    b = 1 / sqrt(D(1, 1));
+    a = 1 / sqrt(D(2, 2));
+    
+    % Угол поворота эллипса
+    theta = atan2d(V(1, 1), V(2, 1));
+    
+%     if a < b
+%         tmp = a;
+%         a = b;
+%         b = tmp;
+%         clear tmp
+%         
+%         theta = -atan2d(V(1, 1), V(2, 1));
+%     end
     
     % Множество точек Х у неповернутого эллипса с центом (0; 0)
     el_x = linspace(-a, a, 1000);
@@ -22,14 +34,14 @@ function [sc_x, sc_y, el_x, el_y, el_params] = calc_scatter_ellipse(intervals)
     el_x = [el_x, flip(el_x)];
     el_y = [el_y, -flip(el_y)];
     
-    % Угол поворота эллипса
-    theta = -atand(V(1, 2) / V(1, 1));
     % Матрица поворота эллипса
-    R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
+    R = [cosd(theta), -sind(theta); sind(theta), cosd(theta)];
     
     % Поворачиваем эллипс
     el_pts = [el_x; el_y]';
     el_pts = el_pts * R;
+%     R = [cosd(-theta), -sind(-theta); sind(-theta), cosd(-theta)];
+%     V = V' * R;
     
     el_x = el_pts(:, 1);
     el_y = el_pts(:, 2);

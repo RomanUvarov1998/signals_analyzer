@@ -10,7 +10,6 @@ Td = [];
 %--------------------------- Main figure --------------------------
 
 global  Load_btn Load_btn_get_pos ...
-        SelectSpan_btn SelectSpan_btn_get_pos ...
         RG_ECG_axes RG_ECG_get_pos ...
         RG_ABP_axes RG_ABP_get_pos ...
         POWER_axes POWER_get_pos
@@ -34,16 +33,6 @@ Load_btn = uicontrol('Style','PushButton', ...
 Load_btn.Position = Load_btn_get_pos(fw, fh);
 Load_btn.Callback = @on_load_btn_click;
 
-SelectSpan_btn_get_pos = @(fw, fh) [ ...
-        40 + 80 + 40,   fh - 40, ...
-        200,            40 ...
-    ];
-SelectSpan_btn = uicontrol('Style','PushButton', ...
-        'Units','pixels',...
-        'String','Выбрать участок и построить');
-SelectSpan_btn.Enable = 'off';
-SelectSpan_btn.Position = SelectSpan_btn_get_pos(fw, fh);
-SelectSpan_btn.Callback = @on_SelectSpan_btn_click;
 
 RG_ECG_get_pos = @(fw, fh) [ ...
         DX,         DY*3 + (fh - DY*4) / 3 * 2, ...
@@ -71,6 +60,7 @@ POWER_get_pos = @(fw, fh) [ ...
     ];
 POWER_axes = axes('Units', 'pixels',...
         'Position', POWER_get_pos(fw, fh));
+POWER_axes.ButtonDownFcn = @POWER_axes_click;
 title('Нагрузка');
 xlabel('Время, с');
 ylabel('Мощность, Вт');
@@ -266,7 +256,6 @@ ylabel('Оценка СПМ, мВ^2');
 
 function on_main_figure_size_changed(s, e)
     global  Load_btn Load_btn_get_pos ...
-            SelectSpan_btn SelectSpan_btn_get_pos ...
             RG_ECG_axes RG_ECG_get_pos ...
             RG_ABP_axes RG_ABP_get_pos ...
             POWER_axes POWER_get_pos
@@ -277,14 +266,13 @@ function on_main_figure_size_changed(s, e)
     fh = f.Position(4);
     
     Load_btn.Position = Load_btn_get_pos(fw, fh);
-    SelectSpan_btn.Position = SelectSpan_btn_get_pos(fw, fh);
     RG_ECG_axes.Position = RG_ECG_get_pos(fw, fh);
     RG_ABP_axes.Position = RG_ABP_get_pos(fw, fh);
     POWER_axes.Position = POWER_get_pos(fw, fh);
 end
 
 function on_load_btn_click(s, e)
-    global Signals SelectSpan_btn Power_spans_inds Td
+    global Signals Power_spans_inds Td
     
     [filename, pathname]= uigetfile({'*.csv','CSV files (*.csv)'}, 'Выберите файл');
 
@@ -301,8 +289,6 @@ function on_load_btn_click(s, e)
     Power_spans_inds = find_power_spans(Td, Signals.Power);
     
     draw_ritmograms_and_power(0);
-    
-    SelectSpan_btn.Enable = 'on';
 end
 
 function draw_ritmograms_and_power(selected_t_span_ind)
@@ -316,8 +302,9 @@ function draw_ritmograms_and_power(selected_t_span_ind)
     axes(RG_ABP_axes); cla; hold on; grid on;
     stem(SSx, SSy);
 
-    axes(POWER_axes); cla; hold on; grid on;
-    plot(Signals.Time, Signals.Power);
+    axes(POWER_axes); cla reset; hold on; grid on;
+    h = plot(Signals.Time, Signals.Power);
+    h.HitTest = 'off';
     
     for span_ind = 1 : size(Power_spans_inds, 1)
         span_t_inds = Power_spans_inds(span_ind, :);
@@ -330,22 +317,32 @@ function draw_ritmograms_and_power(selected_t_span_ind)
             span_FaceColor = [0, 1, 0, 0.2];
         end
         
-        rectangle('Position', [t1, min(Signals.Power), t2 - t1, max(Signals.Power)], ...
+        h = rectangle('Position', [t1, min(Signals.Power), t2 - t1, max(Signals.Power)], ...
                 'Curvature', 0, ...
                 'FaceColor', span_FaceColor, ...
                 'EdgeColor', [0, 1, 0, 1]);
+        h.HitTest = 'off';
         
         clear t1 t2 span_FaceColor
     end
+    
+    POWER_axes.ButtonDownFcn = @POWER_axes_click;
 end
 
-function time_span = ui_get_time_span()
+function POWER_axes_click(s, e)
     global Signals POWER_axes Power_spans_inds Td
     
+    if ~exist('Signals', 'var') || isempty(Signals)
+        return;
+    end
+    
     axes(POWER_axes);
-    [x, ~] = ginput(1);
+    
+    x = num2ruler(e.IntersectionPoint(1), POWER_axes.XAxis);
     
     time_ind = round(x / Td);
+    
+    time_span = [];
     
     for span_ind = 1 : size(Power_spans_inds, 1)
         n_begin = Power_spans_inds(span_ind, 1);
@@ -353,36 +350,31 @@ function time_span = ui_get_time_span()
         if n_begin <= time_ind && time_ind <= n_end
             time_span = [Signals.Time(n_begin), Signals.Time(n_end)];
             draw_ritmograms_and_power(span_ind);
-            return;
+            break;
         end
     end
-    
-    time_span = [];
-end
-
-function on_SelectSpan_btn_click(s, e)
-    global  Signals ...
-            RRscatter SSscatter ...
-            RRpsd_axes SSpsd_axes CPSD_axes ...
-            EllipseTable
-    
-    [RRx, RRy, SSx, SSy] = calc_ritmogramms(Signals);
-
-    time_span = ui_get_time_span();
     
     if isempty(time_span)
         return;
     end
     
+    count_for_selected_span(time_span);
+end
+
+function count_for_selected_span(time_span)
+    global  Signals ...
+            RRscatter SSscatter ...
+            RRpsd_axes SSpsd_axes CPSD_axes ...
+            EllipseTable
+    
     t = Signals.Time;
+    
     t_span = t(t >= time_span(1) & t <= time_span(2));
-    RR_span_inds = RRx >= time_span(1) & RRx <= time_span(2);
-    SS_span_inds = SSx >= time_span(1) & SSx <= time_span(2);
+    
+    [RRx, RRy, SSx, SSy] = calc_ritmogramms(Signals, t_span);
     
     [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f] = calc_psd_welch_an_cpsd( ...
-        t_span, ...
-        RRx(RR_span_inds), RRy(RR_span_inds), ...
-        SSx(SS_span_inds), SSy(SS_span_inds));
+        t_span, RRx, RRy, SSx, SSy);
     
     axes(RRpsd_axes); cla; hold on; grid on;
     plot(RRpsd_f, RRpsd);
@@ -398,10 +390,34 @@ function on_SelectSpan_btn_click(s, e)
     scatter(sc_x, sc_y, 'b');
     plot(el_x, el_y, 'r');
     
+%     p1 = c';                         % First Point
+%     p2 = c' + [V(1, 1), V(2, 1)] .* b;                         % Second Point
+%     dp = p2 - p1;                         % Difference
+%     quiver(p1(1),p1(2),dp(1),dp(2),0);
+%     text(p2(1),p2(2), sprintf('b %f', b));
+%     
+%     p1 = c';                         % First Point
+%     p2 = c' + [V(1, 2), V(2, 2)] .* a;                         % Second Point
+%     dp = p2 - p1;                         % Difference
+%     quiver(p1(1),p1(2),dp(1),dp(2),0);
+%     text(p2(1),p2(2), sprintf('a %f', a));
+    
     axes(SSscatter); cla; hold on; grid on;
     [sc_x, sc_y, el_x, el_y, el_params_SS] = calc_scatter_ellipse(SSy);
     scatter(sc_x, sc_y, 'b');
     plot(el_x, el_y, 'r');
+    
+%     p1 = c';                         % First Point
+%     p2 = c' + [V(1, 1), V(2, 1)] .* b;                         % Second Point
+%     dp = p2 - p1;                         % Difference
+%     quiver(p1(1),p1(2),dp(1),dp(2),0);
+%     text(p2(1),p2(2), sprintf('b %f', b));
+%     
+%     p1 = c';                         % First Point
+%     p2 = c' + [V(1, 2), V(2, 2)] .* a;                         % Second Point
+%     dp = p2 - p1;                         % Difference
+%     quiver(p1(1),p1(2),dp(1),dp(2),0);
+%     text(p2(1),p2(2), sprintf('a %f', a));
     
     EllipseTable.Data = { ...
         el_params_RR.a, 			el_params_SS.a; ...
