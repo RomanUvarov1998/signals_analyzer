@@ -362,6 +362,7 @@ end
 
 function on_SelectSpan_btn_click(s, e)
     global  Signals ...
+            RRscatter SSscatter ...
             RRpsd_axes SSpsd_axes CPSD_axes
     
     [RRx, RRy, SSx, SSy] = calc_ritmogramms(Signals);
@@ -390,6 +391,16 @@ function on_SelectSpan_btn_click(s, e)
     
     axes(CPSD_axes); cla; hold on; grid on;
     plot(CPSD_f, CPSD);
+    
+    axes(RRscatter); cla; hold on; grid on;
+    [sc_x, sc_y, el_x, el_y] = calc_scatter_ellipse(RRy);
+    scatter(sc_x, sc_y, 'b');
+    plot(el_x, el_y, 'r');
+    
+    axes(SSscatter); cla; hold on; grid on;
+    [sc_x, sc_y, el_x, el_y] = calc_scatter_ellipse(SSy);
+    scatter(sc_x, sc_y, 'b');
+    plot(el_x, el_y, 'r');
 end
 
 %--------------------------- Additional figure callbacks ----------------
