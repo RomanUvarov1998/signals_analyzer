@@ -295,13 +295,15 @@ end
 function on_load_btn_click(s, e)
     global Signals Power_spans_inds Td
     
-    [filename, pathname]= uigetfile({'*.csv','CSV files (*.csv)'}, 'Выберите файл');
-
-    if isfloat(filename) || isfloat(pathname)
-        return
-    end
-
-    path = [pathname, filename];
+%     [filename, pathname]= uigetfile({'*.csv','CSV files (*.csv)'}, 'Выберите файл');
+% 
+%     if isfloat(filename) || isfloat(pathname)
+%         return
+%     end
+% 
+%     path = [pathname, filename];
+    
+    path = 'C:\Users\Роман\Dropbox\_Мага 1\Сем 4\Халтура\Ангелина\task_3\Experimental_Data\Обструкция\Хорионовская_15-03-18(17-01-58)_All.csv';
 
     Signals = read_file(path);
     
@@ -409,10 +411,11 @@ function count_for_selected_span()
     plot(CPSD_f, CPSD);
     
     axes(RRscatter); cla; hold on; grid on;
-    [sc_x, sc_y, el_x, el_y, el_params_RR, trend_x, trend_y] = calc_scatter_ellipse(RRy);
+    [sc_x, sc_y, el_x, el_y, el_params_RR, ax, ay, bx, by] = calc_scatter_ellipse(RRy);
     scatter(sc_x, sc_y, 'b');
-    plot(trend_x, trend_y, '--k');
-    plot(el_x, el_y, 'r');
+    plot(ax, ay, 'c', 'LineWidth', 2);
+    plot(bx, by, 'm', 'LineWidth', 2);
+    plot(el_x, el_y, 'r', 'LineWidth', 2);
     
     range_x = max(sc_x) - min(sc_x);
     range_y = max(sc_y) - min(sc_y);
@@ -420,24 +423,13 @@ function count_for_selected_span()
     
     xlim([min(sc_x) - range * 0.1, min(sc_x) + range * 1.1]);
     ylim([min(sc_y) - range * 0.1, min(sc_y) + range * 1.1]);
-    
-%     p1 = c';                         % First Point
-%     p2 = c' + [V(1, 1), V(2, 1)] .* b;                         % Second Point
-%     dp = p2 - p1;                         % Difference
-%     quiver(p1(1),p1(2),dp(1),dp(2),0, 'Color', 'b');
-%     text(p2(1),p2(2), sprintf('b %f', b));
-%     
-%     p1 = c';                         % First Point
-%     p2 = c' + [V(1, 2), V(2, 2)] .* a;                         % Second Point
-%     dp = p2 - p1;                         % Difference
-%     quiver(p1(1),p1(2),dp(1),dp(2),0, 'Color', 'm');
-%     text(p2(1),p2(2), sprintf('a %f', a));
     
     axes(SSscatter); cla; hold on; grid on;
-    [sc_x, sc_y, el_x, el_y, el_params_SS, trend_x, trend_y] = calc_scatter_ellipse(SSy);
+    [sc_x, sc_y, el_x, el_y, el_params_SS, ax, ay, bx, by] = calc_scatter_ellipse(SSy);
     scatter(sc_x, sc_y, 'b');
-    plot(trend_x, trend_y, '--k');
-    plot(el_x, el_y, 'r');
+    plot(ax, ay, 'c', 'LineWidth', 2);
+    plot(bx, by, 'm', 'LineWidth', 2);
+    plot(el_x, el_y, 'r', 'LineWidth', 2);
     
     range_x = max(sc_x) - min(sc_x);
     range_y = max(sc_y) - min(sc_y);
@@ -446,21 +438,9 @@ function count_for_selected_span()
     xlim([min(sc_x) - range * 0.1, min(sc_x) + range * 1.1]);
     ylim([min(sc_y) - range * 0.1, min(sc_y) + range * 1.1]);
     
-%     p1 = c';                         % First Point
-%     p2 = c' + [V(1, 1), V(2, 1)] .* b;                         % Second Point
-%     dp = p2 - p1;                         % Difference
-%     quiver(p1(1),p1(2),dp(1),dp(2),0, 'Color', 'b');
-%     text(p2(1),p2(2), sprintf('b %f', b));
-%     
-%     p1 = c';                         % First Point
-%     p2 = c' + [V(1, 2), V(2, 2)] .* a;                         % Second Point
-%     dp = p2 - p1;                         % Difference
-%     quiver(p1(1),p1(2),dp(1),dp(2),0, 'Color', 'm');
-%     text(p2(1),p2(2), sprintf('a %f', a));
-    
     EllipseTable.Data = { ...
-        el_params_RR.a, 			el_params_SS.a; ...
-        el_params_RR.b, 			el_params_SS.b; ...
+        el_params_RR.ell_len, 		el_params_SS.ell_len; ...
+        el_params_RR.ell_wid, 		el_params_SS.ell_wid; ...
         el_params_RR.square, 		el_params_SS.square; ...
         el_params_RR.m_sr, 			el_params_SS.m_sr; ...
         el_params_RR.interv_min, 	el_params_SS.interv_min; ...

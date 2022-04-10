@@ -1,58 +1,81 @@
-function [sc_x, sc_y, el_x, el_y, el_params, V, c, a, b] = calc_scatter_ellipse(intervals)
+function [sc_x, sc_y, el_x, el_y, el_params, ax, ay, bx, by] = calc_scatter_ellipse(intervals)
     sc_x = intervals(1 : end - 1);
     sc_y = intervals(2 : end);
     
-    % Магическим образом находим матрицу эллипса и его центр
-    % Код украден с:
-    % https://viewer.mathworks.com/?viewer=plain_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2Fsubmissions%2F9542%2Fversions%2F3%2Fcontents%2FMinVolEllipse.m&embed=web
-    [A, c] = MinVolEllipse([sc_x, sc_y]', 0.01);
+%     figure(4), cla, hold on, grid on; %
     
-    % Собственные числа и вектора матрица А
-    [V, D] = eig(A);
+    lens = sqrt(sc_x .^ 2 + sc_y .^ 2);
+    tangents = sc_y ./ sc_x;
+    alphas = atand(tangents);
+    phi = zeros(size(alphas));
+    phi(alphas > 45) = alphas(alphas > 45) - 45;
+    phi(alphas == 45) = 0;
+    phi(alphas < 45) = 45 - alphas(alphas < 45);
     
-    % Полуоси эллипса
-    b = 1 / sqrt(D(1, 1));
-    a = 1 / sqrt(D(2, 2));
+    tx = lens .* cosd(phi);
+    ty = lens .* sind(phi);
     
-    % Угол поворота эллипса
-    theta = atan2d(V(1, 1), V(2, 1));
+    ell_len = max(tx) - min(tx);
+    ell_wid = max(ty) - min(ty);
     
-%     if a < b
-%         tmp = a;
-%         a = b;
-%         b = tmp;
-%         clear tmp
-%         
-%         theta = -atan2d(V(1, 1), V(2, 1));
-%     end
+    a = ell_len / 2;
+    b = ell_wid / 2;
     
-    % Множество точек Х у неповернутого эллипса с центом (0; 0)
     el_x = linspace(-a, a, 1000);
-    % Множество точек Y у неповернутого эллипса с центом (0; 0)
     el_y = b .* (1 - (el_x ./ a) .^ 2) .^ 0.5;
-    % Вторая половина эллипса
+    
     el_x = [el_x, flip(el_x)];
     el_y = [el_y, -flip(el_y)];
+%     plot(el_x, el_y, 'g'); %
     
-    % Матрица поворота эллипса
-    R = [cosd(theta), -sind(theta); sind(theta), cosd(theta)];
+    % Оси
+    ax = linspace(-a, a, 100);
+    ay = ax .* 0;
+    by = linspace(-b, b, 100);
+    bx = by .* 0;
     
-    % Поворачиваем эллипс
-    el_pts = [el_x; el_y]';
-    el_pts = el_pts * R;
-%     R = [cosd(-theta), -sind(-theta); sind(-theta), cosd(-theta)];
-%     V = V' * R;
+    % rotate
+    theta = 45;
+    R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
     
-    el_x = el_pts(:, 1);
-    el_y = el_pts(:, 2);
+    el_pts = [el_x; el_y];
+    el_pts = R * el_pts;
+    el_x = el_pts(1, :);
+    el_y = el_pts(2, :);
     
-    % Устанавливаем центр эллипса
-    el_x = el_x + c(1);
-    el_y = el_y + c(2);
+    axy = [ax; ay];
+    axy = R * axy;
+    ax = axy(1, :);
+    ay = axy(2, :);
+    
+    bxy = [bx; by];
+    bxy = R * bxy;
+    bx = bxy(1, :);
+    by = bxy(2, :);
+    
+%     plot(el_x, el_y, 'm'); %
+    
+    % shift
+    x0 = (max(sc_y) + min(sc_y)) / 2;
+    y0 = (max(sc_x) + min(sc_x)) / 2;
+    
+    el_x = el_x + x0;
+    el_y = el_y + y0;
+    
+    ax = ax + x0;
+    ay = ay + y0;
+    
+    bx = bx + x0;
+    by = by + y0;
+    
+%     scatter(sc_x, sc_y, 'b'); %
+%     plot(el_x, el_y, 'r'); %
+%     plot(ax, ay, '--k'); %
+%     plot(bx, by, '--m'); %
     
     % Параметры эллипса
-    el_params.a = a; 
-    el_params.b = b;
+    el_params.ell_len = ell_len; 
+    el_params.ell_wid = ell_wid;
     el_params.square = pi * a * b; 
     el_params.m_sr = mean(intervals); 
     el_params.interv_min = min(intervals); 
