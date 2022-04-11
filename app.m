@@ -382,6 +382,7 @@ end
 
 function count_for_selected_span()
     global  rb_RR_by_hand rb_RR_auto rb_SS_by_hand rb_SS_auto ...
+            rb_RR_100 rb_RR_95 rb_SS_100 rb_SS_95 ...
             Signals ...
             Selected_time_span ...
             RRscatter SSscatter ...
@@ -390,6 +391,27 @@ function count_for_selected_span()
     
     if isempty(Selected_time_span)
         return;
+    end
+    
+    rb_RR_100.Enable = 'on';
+    rb_RR_95.Enable = 'on';
+    rb_SS_100.Enable = 'on';
+    rb_SS_95.Enable = 'on';
+    
+    if rb_RR_100.Value == 1
+        dots_percentage_RR = 1.00;
+    elseif rb_RR_95.Value == 1
+        dots_percentage_RR = 0.95;
+    else
+        assert(false);
+    end
+    
+    if rb_SS_100.Value == 1
+        dots_percentage_SS = 1.00;
+    elseif rb_SS_95.Value == 1
+        dots_percentage_SS = 0.95;
+    else
+        assert(false);
     end
     
     t = Signals.Time;
@@ -411,8 +433,8 @@ function count_for_selected_span()
     plot(CPSD_f, CPSD);
     
     axes(RRscatter); cla; hold on; grid on;
-    [sc_x, sc_y, el_x, el_y, el_params_RR, ax, ay, bx, by] = calc_scatter_ellipse(RRy);
-    scatter(sc_x, sc_y, 'b');
+    [sc_x, sc_y, el_x, el_y, el_params_RR, ax, ay, bx, by] = calc_scatter_ellipse(RRy, dots_percentage_RR);
+    plot(sc_x, sc_y, '*b');
     plot(ax, ay, 'c', 'LineWidth', 2);
     plot(bx, by, 'm', 'LineWidth', 2);
     plot(el_x, el_y, 'r', 'LineWidth', 2);
@@ -425,8 +447,8 @@ function count_for_selected_span()
     ylim([min(sc_y) - range * 0.1, min(sc_y) + range * 1.1]);
     
     axes(SSscatter); cla; hold on; grid on;
-    [sc_x, sc_y, el_x, el_y, el_params_SS, ax, ay, bx, by] = calc_scatter_ellipse(SSy);
-    scatter(sc_x, sc_y, 'b');
+    [sc_x, sc_y, el_x, el_y, el_params_SS, ax, ay, bx, by] = calc_scatter_ellipse(SSy, dots_percentage_SS);
+    plot(sc_x, sc_y, '*b');
     plot(ax, ay, 'c', 'LineWidth', 2);
     plot(bx, by, 'm', 'LineWidth', 2);
     plot(el_x, el_y, 'r', 'LineWidth', 2);

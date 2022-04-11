@@ -1,6 +1,9 @@
-function [sc_x, sc_y, el_x, el_y, el_params, ax, ay, bx, by] = calc_scatter_ellipse(intervals)
+function [sc_x, sc_y, el_x, el_y, el_params, ax, ay, bx, by] = calc_scatter_ellipse(intervals, dots_percentage)
     sc_x = intervals(1 : end - 1);
     sc_y = intervals(2 : end);
+    
+    assert(length(sc_x) == length(sc_y));
+    N = length(sc_x);
     
 %     figure(4), cla, hold on, grid on; %
     
@@ -14,6 +17,24 @@ function [sc_x, sc_y, el_x, el_y, el_params, ax, ay, bx, by] = calc_scatter_elli
     
     tx = lens .* cosd(phi);
     ty = lens .* sind(phi);
+    
+    assert(0.0 < dots_percentage && dots_percentage <= 1);
+    
+    dp = 1.0 - dots_percentage;
+    p_from = dp / 2;
+    p_to = 1.0 - dp / 2;
+    
+    ind_from = round(p_from * N);
+    ind_to = round(p_to * N);
+    
+    ind_from = max(1, ind_from);
+    ind_to = max(N, ind_to);
+    
+    tx = sort(tx);
+    ty = sort(ty);
+    
+    tx = tx(ind_from : ind_to);
+    ty = ty(ind_from : ind_to);
     
     ell_len = max(tx) - min(tx);
     ell_wid = max(ty) - min(ty);
