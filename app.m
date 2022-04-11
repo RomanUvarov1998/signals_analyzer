@@ -525,23 +525,60 @@ end
 function on_load_btn_click(~, ~)
     global Signals Power_spans_inds Td
     
-%     [filename, pathname]= uigetfile({'*.csv','CSV files (*.csv)'}, 'Выберите файл');
-% 
-%     if isfloat(filename) || isfloat(pathname)
-%         return
-%     end
-% 
-%     path = [pathname, filename];
-    
-    path = 'C:\Users\Роман\Dropbox\_Мага 1\Сем 4\Халтура\Ангелина\task_3\Experimental_Data\Обструкция\Хорионовская_15-03-18(17-01-58)_All.csv';
+    [filename, pathname]= uigetfile({'*.csv','CSV files (*.csv)'}, 'Выберите файл');
+
+    if isfloat(filename) || isfloat(pathname)
+        return
+    end
+
+    path = [pathname, filename];
 
     Signals = read_file(path);
+    
+    if ~check_has_column('Time', 'время'), return; end
+    if ~check_has_column('EKG', 'ЭКГ'), return; end
+    if ~check_has_column('R_Pik', 'метки R-зубцов ЭКГ'), return; end
+    if ~check_has_column('Press', 'давление'), return; end
+    if ~check_has_column('Dia', 'метки диастолического давления'), return; end
+    if ~check_has_column('Sis', 'метки систолического давления'), return; end
+    if ~check_has_column('Sis', 'метки систолического давления'), return; end
+    if ~check_has_column('Power', 'мощность'), return; end
+    
+    if ~check_has_no_NaN_column(Signals.Time, 'Time', 'время'), return; end
+    if ~check_has_no_NaN_column(Signals.EKG, 'EKG', 'ЭКГ'), return; end
+    if ~check_has_no_NaN_column(Signals.R_Pik, 'R_Pik', 'метки R-зубцов ЭКГ'), return; end
+    if ~check_has_no_NaN_column(Signals.Press, 'Press', 'давление'), return; end
+    if ~check_has_no_NaN_column(Signals.Dia, 'Dia', 'метки диастолического давления'), return; end
+    if ~check_has_no_NaN_column(Signals.Sis, 'Sis', 'метки систолического давления'), return; end
+    if ~check_has_no_NaN_column(Signals.Sis, 'Sis', 'метки систолического давления'), return; end
+    if ~check_has_no_NaN_column(Signals.Power, 'Power', 'мощность'), return; end
     
     Td = (Signals.Time(2) - Signals.Time(1));
     
     Power_spans_inds = find_power_spans(Td, Signals.Power);
     
     draw_ritmograms_and_power(0);
+end
+
+function b = check_has_column(name, ui_name)
+    global Signals
+    b = isfield(Signals, name);
+    if ~b
+        errordlg( ...
+            sprintf("В данном файле нет столбца '%s' (%s)", name, ui_name), ...
+            "Неподходящий формат файла", ...
+            "modal");
+    end
+end
+
+function b = check_has_no_NaN_column(column, name, ui_name)
+    b = sum(isnan(column));
+    if ~b
+        errordlg( ...
+            sprintf("В данном файле столбец '%s' (%s) имеет значения NaN", name, ui_name), ...
+            "Неподходящий формат файла", ...
+            "modal");
+    end
 end
 
 function draw_ritmograms_and_power(selected_t_span_ind)

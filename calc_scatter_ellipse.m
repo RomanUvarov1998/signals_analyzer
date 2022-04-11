@@ -76,9 +76,12 @@ function [sc_x, sc_y, el_x, el_y, el_params, ax, ay, bx, by, x0, y0] = calc_scat
     
 %     plot(el_x, el_y, 'm'); %
     
-    % shift
-    x0 = (max(sc_y) + min(sc_y)) / 2;
-    y0 = (max(sc_x) + min(sc_x)) / 2;
+    % center
+    shift_x = (max(sc_x) + min(sc_x)) / 2;
+    shift_y = (max(sc_y) + min(sc_y)) / 2;
+    shift = mean([shift_x, shift_y]);
+    x0 = shift;
+    y0 = shift;
     
     el_x = el_x + x0;
     el_y = el_y + y0;
