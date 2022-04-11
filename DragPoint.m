@@ -3,13 +3,15 @@ classdef DragPoint
     %   Detailed explanation goes here
     
     properties (Access = public)
-        X, Y
+        X, Y, OldX, OldY, PosBeforeDrag
     end
     
     methods
         function obj = DragPoint(x, y, ax, f, OnDragged)
             obj.X = x;
             obj.Y = y;            
+            obj.OldX = x;
+            obj.OldY = y;            
             obj.ax = ax;
             obj.ax.Toolbar.Visible = 'off';            
             obj.f = f;            
@@ -18,6 +20,8 @@ classdef DragPoint
             obj.is_dragged = false;
             obj.drag_delta = [];
             obj.OnDragged = OnDragged;
+            
+            obj.PosBeforeDrag = [];
             
             obj.COLOR_MOUSE_OUT = [0, 1, 1];
             obj.COLOR_MOUSE_OVER = [0, 0, 0];
@@ -92,6 +96,16 @@ classdef DragPoint
             end
         end
         
+        function obj = UpdateOldPos(obj)
+           obj.OldX = obj.X;
+           obj.OldY = obj.Y; 
+        end
+        
+        function obj = MoveToPos(obj)
+            obj.point_handle.XData = obj.X;
+            obj.point_handle.YData = obj.Y;
+        end
+        
         function obj = OnMouseDown(obj)
             if ~ishandle(obj.point_handle), return; end
             if ~obj.mouse_is_over, return; end
@@ -100,6 +114,8 @@ classdef DragPoint
             obj.point_handle.Color = obj.COLOR_MOUSE_DOWN;
             obj.point_handle.Marker = obj.M_MOUSE_DOWN;
             obj.drag_delta = obj.ax.CurrentPoint(1, 1 : 2)' - [obj.X; obj.Y];
+            
+            obj.PosBeforeDrag = [obj.X; obj.Y];
         end
         
         function obj = OnMouseUp(obj)
@@ -113,6 +129,8 @@ classdef DragPoint
             
             obj.point_handle.XData = obj.X;
             obj.point_handle.YData = obj.Y;
+            
+            obj.PosBeforeDrag = [];
         end
     end
     
@@ -126,9 +144,7 @@ classdef DragPoint
     end
     
     methods (Access = private)
-        function on_point_handle_deleted(s, e, obj)
-            
-        end
+        
     end
 end
 

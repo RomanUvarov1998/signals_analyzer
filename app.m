@@ -297,6 +297,9 @@ function on_f2_mouse_moution(~, ~)
     drag_point_RR_b = drag_point_RR_b.OnMouseMove();
     drag_point_RR_center = drag_point_RR_center.OnMouseMove();
     on_point_drag_RR();
+    drag_point_RR_a = drag_point_RR_a.UpdateOldPos();
+    drag_point_RR_b = drag_point_RR_b.UpdateOldPos();
+    drag_point_RR_center = drag_point_RR_center.UpdateOldPos();
 end
 
 function on_f2_mouse_down(~, ~)
@@ -347,6 +350,31 @@ function on_point_drag_RR()
         
         disp('b');
     elseif drag_point_RR_center.IsDragged()
+        pc = [drag_point_RR_center.X; drag_point_RR_center.Y];
+        
+        dc_len = [1 / sqrt(2); 1 / sqrt(2)]' * pc;
+        dc_x_y = sqrt(dc_len^2 / 2);
+        pc_next = [dc_x_y; dc_x_y];
+        
+        delta_pc = pc_next - [drag_point_RR_center.OldX; drag_point_RR_center.OldY];
+        
+        drag_point_RR_a = drag_point_RR_a.SetPos( ...
+            drag_point_RR_a.OldX + delta_pc(1), ...
+            drag_point_RR_a.OldY + delta_pc(2));
+        drag_point_RR_b = drag_point_RR_b.SetPos( ...
+            drag_point_RR_b.OldX + delta_pc(1), ...
+            drag_point_RR_b.OldY + delta_pc(2));
+        drag_point_RR_center = drag_point_RR_center.SetPos(pc_next(1), pc_next(2));
+        
+        h_RR_a.XData = h_RR_a.XData + delta_pc(1);
+        h_RR_a.YData = h_RR_a.YData + delta_pc(2);
+        
+        h_RR_b.XData = h_RR_b.XData + delta_pc(1);
+        h_RR_b.YData = h_RR_b.YData + delta_pc(2);
+        
+        drag_point_RR_a = drag_point_RR_a.MoveToPos();
+        drag_point_RR_b = drag_point_RR_b.MoveToPos();
+        
         disp('c');
     else
         return;
