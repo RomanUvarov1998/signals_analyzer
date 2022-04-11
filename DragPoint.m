@@ -3,15 +3,15 @@ classdef DragPoint
     %   Detailed explanation goes here
     
     properties (Access = public)
-        X, Y, OldX, OldY, PosBeforeDrag
+        X, Y, OldX, OldY
     end
     
     methods
-        function obj = DragPoint(x, y, ax, f, OnDragged)
-            obj.X = x;
-            obj.Y = y;            
-            obj.OldX = x;
-            obj.OldY = y;            
+        function obj = DragPoint(ax, f)
+            obj.X = [];
+            obj.Y = [];            
+            obj.OldX = [];
+            obj.OldY = [];            
             obj.ax = ax;
             obj.ax.Toolbar.Visible = 'off';            
             obj.f = f;            
@@ -19,9 +19,6 @@ classdef DragPoint
             obj.mouse_is_over = false;
             obj.is_dragged = false;
             obj.drag_delta = [];
-            obj.OnDragged = OnDragged;
-            
-            obj.PosBeforeDrag = [];
             
             obj.COLOR_MOUSE_OUT = [0, 1, 1];
             obj.COLOR_MOUSE_OVER = [0, 0, 0];
@@ -35,7 +32,9 @@ classdef DragPoint
         function obj = Draw(obj, x, y)
             axes(obj.ax);
             obj.X = x;
-            obj.Y = y;
+            obj.Y = y;       
+            obj.OldX = x;
+            obj.OldY = y;  
             obj.point_handle = plot(x, y, 'MarkerSize', 10);
             obj.point_handle.Color = obj.COLOR_MOUSE_OUT;
             obj.point_handle.Marker = obj.M_MOUSE_OUT;
@@ -114,8 +113,6 @@ classdef DragPoint
             obj.point_handle.Color = obj.COLOR_MOUSE_DOWN;
             obj.point_handle.Marker = obj.M_MOUSE_DOWN;
             obj.drag_delta = obj.ax.CurrentPoint(1, 1 : 2)' - [obj.X; obj.Y];
-            
-            obj.PosBeforeDrag = [obj.X; obj.Y];
         end
         
         function obj = OnMouseUp(obj)
@@ -129,8 +126,6 @@ classdef DragPoint
             
             obj.point_handle.XData = obj.X;
             obj.point_handle.YData = obj.Y;
-            
-            obj.PosBeforeDrag = [];
         end
     end
     
@@ -138,7 +133,6 @@ classdef DragPoint
         ax, f, point_handle, 
         mouse_is_over, is_dragged, 
         drag_delta,
-        OnDragged,
         COLOR_MOUSE_OUT, COLOR_MOUSE_OVER, COLOR_MOUSE_DOWN,
         M_MOUSE_OUT, M_MOUSE_OVER, M_MOUSE_DOWN
     end

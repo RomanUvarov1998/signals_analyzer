@@ -17,6 +17,7 @@ global  Load_btn Load_btn_get_pos ...
     
 f = figure(1); clf;
 f.SizeChangedFcn = @on_main_figure_size_changed;
+f.Name = 'Программный комплекс графического анализа сердечного ритма';
 
 DX = 40;
 DY = 60;
@@ -25,7 +26,7 @@ fw = f.Position(3);
 fh = f.Position(4);
 
 Load_btn_get_pos = @(fw, fh) [ ...
-    DX,         fh - 40, ...
+    DX,         fh - 50, ...
     80,  40 ...
 ];
 Load_btn = uicontrol('Style','PushButton', ...
@@ -81,11 +82,12 @@ global  RRScatter_settings RRScatter_settings_get_pos ...
 
 f2 = figure(2); clf;
 f2.SizeChangedFcn = @on_additional_figure_size_changed;
+f2.Name = 'Данные по выбранному участку';
 SETTINGS_WIDTH = 130;
 
 RRScatter_settings_get_pos = @(fw, fh) [ ...
         DX,             DY*3 + (fh - DY*4) / 3 * 2, ...
-        SETTINGS_WIDTH,  (fh - DY*4) / 3 ...
+        SETTINGS_WIDTH-30,  (fh - DY*4) / 3 ...
     ];
 RRScatter_settings = uipanel( ...
     'Units','pixels',...
@@ -94,8 +96,8 @@ RRScatter_settings = uipanel( ...
 
 bg = uibuttongroup(RRScatter_settings, ...
     'Units', 'normalized', ...
-    'Position', [0.05, 0.05*2+0.75/2, 0.9, 0.75/2], ...
-    'SelectionChangedFcn', @(s, e) count_for_selected_span());
+    'Position', [0.05, 0.05, 0.9, 0.9], ...
+    'SelectionChangedFcn', @(s, e) count_for_selected_span('RR'));
 rb_RR_100 = uicontrol(bg, ...
     'Enable', 'off', ...
     'Value', 1, ...
@@ -123,8 +125,8 @@ RRscatter = axes('Units', 'pixels',...
         'Position', RRscatter_get_pos(fw, fh), ...
         'DataAspectRatio', [1, 1, 1]);
 title('Скаттерограмма ритмограммы ЭКГ');
-xlabel('RR_i, мВ');
-ylabel('RR_i-1, мВ');
+xlabel('RR_i, с');
+ylabel('RR_i-1, с');
 
 RRpsd_axes_get_pos = @(fw, fh) [ ...
         DX + SETTINGS_WIDTH + DX + (fw - DX*5)/4 + DX,	...
@@ -136,13 +138,13 @@ RRpsd_axes = axes('Units', 'pixels',...
         'Position', RRpsd_axes_get_pos(fw, fh));
 title('Спектр Уэлча ритмограммы ЭКГ');
 xlabel('Частота, Гц');
-ylabel('Оценка СПМ, мВ^2');
+ylabel('Оценка СПМ, с^2');
 
 
 SSScatter_settings_get_pos = @(fw, fh) [ ...
         DX, ...
         DY*2 + (fh - DY*4) / 3 * 1, ...
-        SETTINGS_WIDTH, ...
+        SETTINGS_WIDTH-30, ...
         (fh - DY*4) / 3 ...
     ];
 SSScatter_settings = uipanel( ...
@@ -152,8 +154,8 @@ SSScatter_settings = uipanel( ...
 
 bg = uibuttongroup(SSScatter_settings, ...
     'Units', 'normalized', ...
-    'Position', [0.05, 0.05*2+0.75/2, 0.9, 0.75/2], ...
-    'SelectionChangedFcn', @(s, e) count_for_selected_span());
+    'Position', [0.05, 0.05, 0.9, 0.9], ...
+    'SelectionChangedFcn', @(s, e) count_for_selected_span('SS'));
 rb_SS_100 = uicontrol(bg, ...
     'Enable', 'off', ...
     'Value', 1, ...
@@ -181,8 +183,8 @@ SSscatter = axes('Units', 'pixels',...
         'Position', SSscatter_get_pos(fw, fh), ...
         'DataAspectRatio', [1, 1, 1]);
 title('Скаттерограмма ритмограммы АД');
-xlabel('SS_i, мВ');
-ylabel('SS_i-1, мВ');
+xlabel('SS_i, с');
+ylabel('SS_i-1, с');
 
 SSpsd_axes_get_pos = @(fw, fh) [ ...
         DX + SETTINGS_WIDTH + DX + (fw - DX*5)/4 + DX,	...
@@ -194,7 +196,7 @@ SSpsd_axes = axes('Units', 'pixels',...
         'Position', SSpsd_axes_get_pos(fw, fh));
 title('Спектр Уэлча ритмограммы АД');
 xlabel('Частота, Гц');
-ylabel('Оценка СПМ, мВ^2');
+ylabel('Оценка СПМ, с^2');
 
 
 EllipseTable_get_pos = @(fw, fh) [ ...
@@ -208,14 +210,14 @@ EllipseTable = uitable('Units', 'pixels',...
 EllipseTable.ColumnEditable = false;
 EllipseTable.ColumnName = { 'ЭКГ', 'АД' };
 EllipseTable.RowName = [ ...
-    "Длина облака, с"; ...
-    "Ширина облака, с"; ...
-    "Площадь облака, с"; ...
-    "Мср, с";
-    "RR(SS)_min, с"; ...
-    "RR(SS)_max, с"; ...
-    "Размах RR(SS), с"; ...
-    "Mo, с" ...
+    "Длина облака, мс"; ...
+    "Ширина облака, мс"; ...
+    "Площадь облака, мс^2"; ...
+    "Мср, мс";
+    "RR(SS)_min, мс"; ...
+    "RR(SS)_max, мс"; ...
+    "Размах RR(SS), мс"; ...
+    "Mo, мс" ...
 ];
 EllipseTable.ColumnWidth = 'fit';
 
@@ -229,14 +231,16 @@ CPSD_axes = axes('Units', 'pixels',...
         'Position', CPSD_axes_get_pos(fw, fh));
 title('Кросс-СПМ ритмограмм АД и ЭКГ');
 xlabel('Частота, Гц');
-ylabel('Оценка СПМ, мВ^2');
+ylabel('Оценка СПМ, с^2');
+
+%------------------------- RR scatter ellipse ---------------------------
 
 global drag_point_RR_a drag_point_RR_b drag_point_RR_center
 
 axes(RRscatter); hold on; grid on;
-drag_point_RR_a = DragPoint(0.5, 0.5, RRscatter, f2, @on_point_drag_RR);
-drag_point_RR_b = DragPoint(0.5, 0.6, RRscatter, f2, @on_point_drag_RR);
-drag_point_RR_center = DragPoint(0.5, 0.7, RRscatter, f2, @on_point_drag_RR);
+drag_point_RR_a = DragPoint(RRscatter, f2);
+drag_point_RR_b = DragPoint(RRscatter, f2);
+drag_point_RR_center = DragPoint(RRscatter, f2);
 
 f2.WindowButtonMotionFcn = @on_f2_mouse_moution;
 f2.WindowButtonDownFcn = @on_f2_mouse_down;
@@ -246,6 +250,24 @@ global h_RR_a h_RR_b h_RR_ellipse
 h_RR_a = -1;
 h_RR_b = -1;
 h_RR_ellipse = -1;
+
+%------------------------- SS scatter ellipse ---------------------------
+
+global drag_point_SS_a drag_point_SS_b drag_point_SS_center
+
+axes(SSscatter); hold on; grid on;
+drag_point_SS_a = DragPoint(SSscatter, f2);
+drag_point_SS_b = DragPoint(SSscatter, f2);
+drag_point_SS_center = DragPoint(SSscatter, f2);
+
+f2.WindowButtonMotionFcn = @on_f2_mouse_moution;
+f2.WindowButtonDownFcn = @on_f2_mouse_down;
+f2.WindowButtonUpFcn = @on_f2_mouse_up;
+
+global h_SS_a h_SS_b h_SS_ellipse
+h_SS_a = -1;
+h_SS_b = -1;
+h_SS_ellipse = -1;
 
 %--------------------------- Main figure callbacks ----------------------
 
@@ -258,6 +280,15 @@ function on_f2_mouse_moution(~, ~)
     drag_point_RR_a = drag_point_RR_a.UpdateOldPos();
     drag_point_RR_b = drag_point_RR_b.UpdateOldPos();
     drag_point_RR_center = drag_point_RR_center.UpdateOldPos();
+    
+    global drag_point_SS_a drag_point_SS_b drag_point_SS_center
+    drag_point_SS_a = drag_point_SS_a.OnMouseMove();
+    drag_point_SS_b = drag_point_SS_b.OnMouseMove();
+    drag_point_SS_center = drag_point_SS_center.OnMouseMove();
+    on_point_drag_SS();
+    drag_point_SS_a = drag_point_SS_a.UpdateOldPos();
+    drag_point_SS_b = drag_point_SS_b.UpdateOldPos();
+    drag_point_SS_center = drag_point_SS_center.UpdateOldPos();
 end
 
 function on_f2_mouse_down(~, ~)
@@ -271,6 +302,17 @@ function on_f2_mouse_down(~, ~)
     
     drag_point_RR_center = drag_point_RR_center.OnMouseDown();
     if drag_point_RR_center.IsDragged(), return; end
+		
+    global drag_point_SS_a drag_point_SS_b drag_point_SS_center
+    
+    drag_point_SS_a = drag_point_SS_a.OnMouseDown();
+    if drag_point_SS_a.IsDragged(), return; end
+    
+    drag_point_SS_b = drag_point_SS_b.OnMouseDown();
+    if drag_point_SS_b.IsDragged(), return; end
+    
+    drag_point_SS_center = drag_point_SS_center.OnMouseDown();
+    if drag_point_SS_center.IsDragged(), return; end
 end
 
 function on_f2_mouse_up(~, ~)
@@ -278,6 +320,11 @@ function on_f2_mouse_up(~, ~)
     drag_point_RR_a = drag_point_RR_a.OnMouseUp();
     drag_point_RR_b = drag_point_RR_b.OnMouseUp();
     drag_point_RR_center = drag_point_RR_center.OnMouseUp();
+		
+    global drag_point_SS_a drag_point_SS_b drag_point_SS_center
+    drag_point_SS_a = drag_point_SS_a.OnMouseUp();
+    drag_point_SS_b = drag_point_SS_b.OnMouseUp();
+    drag_point_SS_center = drag_point_SS_center.OnMouseUp();
 end
 
 function on_point_drag_RR()
@@ -297,8 +344,6 @@ function on_point_drag_RR()
         a_pts = [pa, pc + (pc - pa)];  
         h_RR_a.XData = a_pts(1, :);
         h_RR_a.YData = a_pts(2, :);
-        
-        disp('a');
     elseif drag_point_RR_b.IsDragged()
         db_len = [-1 / sqrt(2); 1 / sqrt(2)]' * [drag_point_RR_b.X; drag_point_RR_b.Y];
         db_x_y = sqrt(db_len^2 / 2);
@@ -311,8 +356,6 @@ function on_point_drag_RR()
         b_pts = [pb, pc + (pc - pb)]; 
         h_RR_b.XData = b_pts(1, :);
         h_RR_b.YData = b_pts(2, :);
-        
-        disp('b');
     elseif drag_point_RR_center.IsDragged()
         pc = [drag_point_RR_center.X; drag_point_RR_center.Y];
         
@@ -338,8 +381,6 @@ function on_point_drag_RR()
         
         drag_point_RR_a = drag_point_RR_a.MoveToPos();
         drag_point_RR_b = drag_point_RR_b.MoveToPos();
-        
-        disp('c');
     else
         return;
     end
@@ -368,9 +409,98 @@ function on_point_drag_RR()
     global EllipseTable
     Data = EllipseTable.Data;
     
-    Data{1,1} = a * 2; % ell_len
-    Data{2,1} = b * 2; % ell_wid
-    Data{3,1} = pi * a * b; % square
+    Data{1,1} = 1000 * a * 2; % ell_len
+    Data{2,1} = 1000 * b * 2; % ell_wid
+    Data{3,1} = 1000 * 1000 * pi * a * b; % square
+    
+    EllipseTable.Data = Data;
+end
+
+function on_point_drag_SS()
+    global drag_point_SS_a drag_point_SS_b drag_point_SS_center
+    global h_SS_a h_SS_b h_SS_ellipse
+    
+    if ~ishandle(h_SS_a) || ~ishandle(h_SS_b) || ~ishandle(h_SS_ellipse)
+        return
+    end
+    
+    if drag_point_SS_a.IsDragged()
+        d = (drag_point_SS_a.X + drag_point_SS_a.Y) / 2;
+        drag_point_SS_a = drag_point_SS_a.SetPos(d, d);
+        
+        pa = [drag_point_SS_a.X; drag_point_SS_a.Y];
+        pc = [drag_point_SS_center.X; drag_point_SS_center.Y];
+        a_pts = [pa, pc + (pc - pa)];  
+        h_SS_a.XData = a_pts(1, :);
+        h_SS_a.YData = a_pts(2, :);
+    elseif drag_point_SS_b.IsDragged()
+        db_len = [-1 / sqrt(2); 1 / sqrt(2)]' * [drag_point_SS_b.X; drag_point_SS_b.Y];
+        db_x_y = sqrt(db_len^2 / 2);
+        db = [-db_x_y; db_x_y];
+        
+        pc = [drag_point_SS_center.X; drag_point_SS_center.Y];
+        pb = pc + db;
+        drag_point_SS_b = drag_point_SS_b.SetPos(pb(1), pb(2));
+        
+        b_pts = [pb, pc + (pc - pb)]; 
+        h_SS_b.XData = b_pts(1, :);
+        h_SS_b.YData = b_pts(2, :);
+    elseif drag_point_SS_center.IsDragged()
+        pc = [drag_point_SS_center.X; drag_point_SS_center.Y];
+        
+        dc_len = [1 / sqrt(2); 1 / sqrt(2)]' * pc;
+        dc_x_y = sqrt(dc_len^2 / 2);
+        pc_next = [dc_x_y; dc_x_y];
+        
+        delta_pc = pc_next - [drag_point_SS_center.OldX; drag_point_SS_center.OldY];
+        
+        drag_point_SS_a = drag_point_SS_a.SetPos( ...
+            drag_point_SS_a.OldX + delta_pc(1), ...
+            drag_point_SS_a.OldY + delta_pc(2));
+        drag_point_SS_b = drag_point_SS_b.SetPos( ...
+            drag_point_SS_b.OldX + delta_pc(1), ...
+            drag_point_SS_b.OldY + delta_pc(2));
+        drag_point_SS_center = drag_point_SS_center.SetPos(pc_next(1), pc_next(2));
+        
+        h_SS_a.XData = h_SS_a.XData + delta_pc(1);
+        h_SS_a.YData = h_SS_a.YData + delta_pc(2);
+        
+        h_SS_b.XData = h_SS_b.XData + delta_pc(1);
+        h_SS_b.YData = h_SS_b.YData + delta_pc(2);
+        
+        drag_point_SS_a = drag_point_SS_a.MoveToPos();
+        drag_point_SS_b = drag_point_SS_b.MoveToPos();
+    else
+        return;
+    end
+    
+    pa = [drag_point_SS_a.X; drag_point_SS_a.Y];
+    pb = [drag_point_SS_b.X; drag_point_SS_b.Y];
+    pc = [drag_point_SS_center.X; drag_point_SS_center.Y];
+    
+    a = sqrt(sum((pa - pc) .^ 2));
+    b = sqrt(sum((pb - pc) .^ 2));
+    
+    el_x = linspace(-a, a, 1000);
+    el_y = b .* (1 - (el_x ./ a) .^ 2) .^ 0.5;
+    
+    el_x = [el_x, flip(el_x)];
+    el_y = [el_y, -flip(el_y)];
+    
+    theta = 45;
+    R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
+    
+    el_pts = [el_x; el_y];
+    el_pts = R * el_pts + pc;
+    h_SS_ellipse.XData = el_pts(1, :);
+    h_SS_ellipse.YData = el_pts(2, :);
+    
+    global EllipseTable
+    Data = EllipseTable.Data;
+    
+    Data{1,2} = 1000 * a * 2; % ell_len
+    Data{2,2} = 1000 * b * 2; % ell_wid
+    Data{3,2} = 1000 * 1000 * pi * a * b; % square
     
     EllipseTable.Data = Data;
 end
@@ -477,13 +607,16 @@ function POWER_axes_click(~, e)
         end
     end
     
-    count_for_selected_span();
+    count_for_selected_span('RRSS');
 end
 
-function count_for_selected_span()
+function count_for_selected_span(to_recount)
     global  drag_point_RR_a drag_point_RR_b drag_point_RR_center ...
             h_RR_a h_RR_b h_RR_ellipse ...
-            rb_RR_100 rb_RR_95 rb_SS_100 rb_SS_95 ...
+            rb_RR_100 rb_RR_95 ...
+            drag_point_SS_a drag_point_SS_b drag_point_SS_center ...
+            h_SS_a h_SS_b h_SS_ellipse ...
+            rb_SS_100 rb_SS_95 ...
             Signals ...
             Selected_time_span ...
             RRscatter SSscatter ...
@@ -524,57 +657,76 @@ function count_for_selected_span()
     [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f] = calc_psd_welch_an_cpsd( ...
         t_span, RRx, RRy, SSx, SSy);
     
-    axes(RRpsd_axes); cla; hold on; grid on;
-    plot(RRpsd_f, RRpsd);
+    if contains(to_recount, 'RR')
+        axes(RRpsd_axes); cla; hold on; grid on;
+        plot(RRpsd_f, RRpsd);
     
-    axes(SSpsd_axes); cla; hold on; grid on;
-    plot(SSpsd_f, SSpsd);
+        axes(RRscatter); cla; hold on; grid on;
+        [sc_x, sc_y, el_x, el_y, el_params_RR, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(RRy, dots_percentage_RR);
+        plot(sc_x, sc_y, '*b');
+        h_RR_a = plot(ax, ay, 'c', 'LineWidth', 2);
+        h_RR_b = plot(bx, by, 'm', 'LineWidth', 2);
+        h_RR_ellipse = plot(el_x, el_y, 'r', 'LineWidth', 2);
+
+        drag_point_RR_a = drag_point_RR_a.Draw(ax(end), ay(end));
+        drag_point_RR_b = drag_point_RR_b.Draw(bx(end), by(end));
+        drag_point_RR_center = drag_point_RR_center.Draw(x0, y0);    
+
+        range_x = max(sc_x) - min(sc_x);
+        range_y = max(sc_y) - min(sc_y);
+        range = max(range_x, range_y);
+
+        xlim([min(sc_x) - range * 0.4, min(sc_x) + range * 1.4]);
+        ylim([min(sc_y) - range * 0.4, min(sc_y) + range * 1.4]);
     
-    axes(CPSD_axes); cla; hold on; grid on;
-    plot(CPSD_f, CPSD);
+        Data = EllipseTable.Data;
+        Data{1, 1} = 1000 * el_params_RR.ell_len;
+        Data{2, 1} = 1000 * el_params_RR.ell_wid;
+        Data{3, 1} = 1000 * 1000 * el_params_RR.square;
+        Data{4, 1} = 1000 * el_params_RR.m_sr;
+        Data{5, 1} = 1000 * el_params_RR.interv_min;
+        Data{6, 1} = 1000 * el_params_RR.interv_max;
+        Data{7, 1} = 1000 * el_params_RR.interv_range;
+        Data{8, 1} = 1000 * el_params_RR.mo;
+        EllipseTable.Data = Data;
+    end
     
-    axes(RRscatter); cla; hold on; grid on;
-    [sc_x, sc_y, el_x, el_y, el_params_RR, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(RRy, dots_percentage_RR);
-    plot(sc_x, sc_y, '*b');
-    h_RR_a = plot(ax, ay, 'c', 'LineWidth', 2);
-    h_RR_b = plot(bx, by, 'm', 'LineWidth', 2);
-    h_RR_ellipse = plot(el_x, el_y, 'r', 'LineWidth', 2);
+    if contains(to_recount, 'SS')
+        axes(SSpsd_axes); cla; hold on; grid on;
+        plot(SSpsd_f, SSpsd);
     
-    drag_point_RR_a = drag_point_RR_a.Draw(ax(end), ay(end));
-    drag_point_RR_b = drag_point_RR_b.Draw(bx(end), by(end));
-    drag_point_RR_center = drag_point_RR_center.Draw(x0, y0);    
+        axes(CPSD_axes); cla; hold on; grid on;
+        plot(CPSD_f, CPSD);
+
+        axes(SSscatter); cla; hold on; grid on;
+        [sc_x, sc_y, el_x, el_y, el_params_SS, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(SSy, dots_percentage_SS);
+        plot(sc_x, sc_y, '*b');
+        h_SS_a = plot(ax, ay, 'c', 'LineWidth', 2);
+        h_SS_b = plot(bx, by, 'm', 'LineWidth', 2);
+        h_SS_ellipse = plot(el_x, el_y, 'r', 'LineWidth', 2);
+
+        drag_point_SS_a = drag_point_SS_a.Draw(ax(end), ay(end));
+        drag_point_SS_b = drag_point_SS_b.Draw(bx(end), by(end));
+        drag_point_SS_center = drag_point_SS_center.Draw(x0, y0);   
+
+        range_x = max(sc_x) - min(sc_x);
+        range_y = max(sc_y) - min(sc_y);
+        range = max(range_x, range_y);
+
+        xlim([min(sc_x) - range * 0.4, min(sc_x) + range * 1.4]);
+        ylim([min(sc_y) - range * 0.4, min(sc_y) + range * 1.4]);
     
-    range_x = max(sc_x) - min(sc_x);
-    range_y = max(sc_y) - min(sc_y);
-    range = max(range_x, range_y);
-    
-    xlim([min(sc_x) - range * 0.4, min(sc_x) + range * 1.4]);
-    ylim([min(sc_y) - range * 0.4, min(sc_y) + range * 1.4]);
-    
-    axes(SSscatter); cla; hold on; grid on;
-    [sc_x, sc_y, el_x, el_y, el_params_SS, ax, ay, bx, by] = calc_scatter_ellipse(SSy, dots_percentage_SS);
-    plot(sc_x, sc_y, '*b');
-    plot(ax, ay, 'c', 'LineWidth', 2);
-    plot(bx, by, 'm', 'LineWidth', 2);
-    plot(el_x, el_y, 'r', 'LineWidth', 2);
-    
-    range_x = max(sc_x) - min(sc_x);
-    range_y = max(sc_y) - min(sc_y);
-    range = max(range_x, range_y);
-    
-    xlim([min(sc_x) - range * 0.4, min(sc_x) + range * 1.4]);
-    ylim([min(sc_y) - range * 0.4, min(sc_y) + range * 1.4]);
-    
-    EllipseTable.Data = { ...
-        el_params_RR.ell_len, 		el_params_SS.ell_len; ...
-        el_params_RR.ell_wid, 		el_params_SS.ell_wid; ...
-        el_params_RR.square, 		el_params_SS.square; ...
-        el_params_RR.m_sr, 			el_params_SS.m_sr; ...
-        el_params_RR.interv_min, 	el_params_SS.interv_min; ...
-        el_params_RR.interv_max, 	el_params_SS.interv_max; ...
-        el_params_RR.interv_range, 	el_params_SS.interv_range; ...
-        el_params_RR.mo, 			el_params_SS.mo; ...
-    };
+        Data = EllipseTable.Data;
+        Data{1, 2} = 1000 * el_params_SS.ell_len;
+        Data{2, 2} = 1000 * el_params_SS.ell_wid;
+        Data{3, 2} = 1000 * 1000 * el_params_SS.square;
+        Data{4, 2} = 1000 * el_params_SS.m_sr;
+        Data{5, 2} = 1000 * el_params_SS.interv_min;
+        Data{6, 2} = 1000 * el_params_SS.interv_max;
+        Data{7, 2} = 1000 * el_params_SS.interv_range;
+        Data{8, 2} = 1000 * el_params_SS.mo;
+        EllipseTable.Data = Data;
+    end
 end
 
 %--------------------------- Additional figure callbacks ----------------
