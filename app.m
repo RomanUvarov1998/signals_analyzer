@@ -364,6 +364,15 @@ function on_point_drag_RR()
     el_pts = R * el_pts + pc;
     h_RR_ellipse.XData = el_pts(1, :);
     h_RR_ellipse.YData = el_pts(2, :);
+    
+    global EllipseTable
+    Data = EllipseTable.Data;
+    
+    Data{1,1} = a * 2; % ell_len
+    Data{2,1} = b * 2; % ell_wid
+    Data{3,1} = pi * a * b; % square
+    
+    EllipseTable.Data = Data;
 end
 
 function on_main_figure_size_changed(s, ~)
