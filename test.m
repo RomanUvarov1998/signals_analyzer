@@ -6,13 +6,14 @@ nexttile; cla; hold on; grid on;
 plot(1:10,1:10,'-o','buttondownfcn',{@Mouse_Callback,'down'});
 
 nexttile; cla; hold on; grid on;
-p = plot(5, 3, '-or');
 plot(1 : 10, 2 : 11, 'b');
+p = plot(5, 3, '-or');
 f.WindowButtonMotionFcn = {@plot_mouse_moution, p, f};
 
 global dragged_point ax
 dragged_point = [];
 ax = gca;
+ax.Toolbar.Visible = 'off';
 
 function plot_mouse_moution(s, e, point, f)
     global dragged_point ax
@@ -54,12 +55,12 @@ function plot_mouse_moution(s, e, point, f)
     if dist < min_dist
         point.Color = [0, 0, 1];
         ax.XLimMode
-%         f.WindowButtonDownFcn = {@on_point_btn_down, point};
-%         f.WindowButtonUpFcn = {@on_point_btn_up, point};
+        f.WindowButtonDownFcn = {@on_point_btn_down, point};
+        f.WindowButtonUpFcn = {@on_point_btn_up, point};
     else
         point.Color = [1, 0, 0];
-%         f.WindowButtonDownFcn = [];
-%         f.WindowButtonUpFcn = [];
+        f.WindowButtonDownFcn = [];
+        f.WindowButtonUpFcn = [];
     end
 end
 

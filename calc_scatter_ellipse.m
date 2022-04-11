@@ -1,4 +1,4 @@
-function [sc_x, sc_y, el_x, el_y, el_params, ax, ay, bx, by] = calc_scatter_ellipse(intervals, dots_percentage)
+function [sc_x, sc_y, el_x, el_y, el_params, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(intervals, dots_percentage)
     sc_x = intervals(1 : end - 1);
     sc_y = intervals(2 : end);
     
@@ -50,10 +50,10 @@ function [sc_x, sc_y, el_x, el_y, el_params, ax, ay, bx, by] = calc_scatter_elli
 %     plot(el_x, el_y, 'g'); %
     
     % Оси
-    ax = linspace(-a, a, 100);
-    ay = ax .* 0;
-    by = linspace(-b, b, 100);
-    bx = by .* 0;
+    ax = [-a, a];
+    ay = [0, 0];
+    by = [-b, b];
+    bx = [0, 0];
     
     % rotate
     theta = 45;

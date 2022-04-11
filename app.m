@@ -273,7 +273,106 @@ title('Кросс-СПМ ритмограмм АД и ЭКГ');
 xlabel('Частота, Гц');
 ylabel('Оценка СПМ, мВ^2');
 
+global drag_point_RR_a drag_point_RR_b drag_point_RR_center
+
+axes(RRscatter); hold on; grid on;
+drag_point_RR_a = DragPoint(0.5, 0.5, RRscatter, f2, @on_point_drag_RR);
+drag_point_RR_b = DragPoint(0.5, 0.6, RRscatter, f2, @on_point_drag_RR);
+drag_point_RR_center = DragPoint(0.5, 0.7, RRscatter, f2, @on_point_drag_RR);
+
+f2.WindowButtonMotionFcn = @on_f2_mouse_moution;
+f2.WindowButtonDownFcn = @on_f2_mouse_down;
+f2.WindowButtonUpFcn = @on_f2_mouse_up;
+
+global h_RR_a h_RR_b h_RR_ellipse
+h_RR_a = -1;
+h_RR_b = -1;
+h_RR_ellipse = -1;
+
 %--------------------------- Main figure callbacks ----------------------
+
+function on_f2_mouse_moution(~, ~)
+    global drag_point_RR_a drag_point_RR_b drag_point_RR_center
+    drag_point_RR_a = drag_point_RR_a.OnMouseMove();
+    drag_point_RR_b = drag_point_RR_b.OnMouseMove();
+    drag_point_RR_center = drag_point_RR_center.OnMouseMove();
+    on_point_drag_RR();
+end
+
+function on_f2_mouse_down(~, ~)
+    global drag_point_RR_a drag_point_RR_b drag_point_RR_center
+    drag_point_RR_a = drag_point_RR_a.OnMouseDown();
+    drag_point_RR_b = drag_point_RR_b.OnMouseDown();
+    drag_point_RR_center = drag_point_RR_center.OnMouseDown();
+end
+
+function on_f2_mouse_up(~, ~)
+    global drag_point_RR_a drag_point_RR_b drag_point_RR_center
+    drag_point_RR_a = drag_point_RR_a.OnMouseUp();
+    drag_point_RR_b = drag_point_RR_b.OnMouseUp();
+    drag_point_RR_center = drag_point_RR_center.OnMouseUp();
+end
+
+function on_point_drag_RR()
+    global drag_point_RR_a drag_point_RR_b drag_point_RR_center
+    global h_RR_a h_RR_b h_RR_ellipse
+    
+    if ~ishandle(h_RR_a) || ~ishandle(h_RR_b) || ~ishandle(h_RR_ellipse)
+        return
+    end
+    
+    if drag_point_RR_a.IsDragged()
+        d = (drag_point_RR_a.X + drag_point_RR_a.Y) / 2;
+        drag_point_RR_a = drag_point_RR_a.SetPos(d, d);
+        
+        pa = [drag_point_RR_a.X; drag_point_RR_a.Y];
+        pc = [drag_point_RR_center.X; drag_point_RR_center.Y];
+        a_pts = [pa, pc + (pc - pa)];  
+        h_RR_a.XData = a_pts(1, :);
+        h_RR_a.YData = a_pts(2, :);
+        
+        disp('a');
+    elseif drag_point_RR_b.IsDragged()
+        db_len = [-1 / sqrt(2); 1 / sqrt(2)]' * [drag_point_RR_b.X; drag_point_RR_b.Y];
+        db_x_y = sqrt(db_len^2 / 2);
+        db = [-db_x_y; db_x_y];
+        
+        pc = [drag_point_RR_center.X; drag_point_RR_center.Y];
+        pb = pc + db;
+        drag_point_RR_b = drag_point_RR_b.SetPos(pb(1), pb(2));
+        
+        b_pts = [pb, pc + (pc - pb)]; 
+        h_RR_b.XData = b_pts(1, :);
+        h_RR_b.YData = b_pts(2, :);
+        
+        disp('b');
+    elseif drag_point_RR_center.IsDragged()
+        disp('c');
+    else
+        return;
+    end
+    
+    pa = [drag_point_RR_a.X; drag_point_RR_a.Y];
+    pb = [drag_point_RR_b.X; drag_point_RR_b.Y];
+    pc = [drag_point_RR_center.X; drag_point_RR_center.Y];
+    
+    a = sqrt(sum((pa - pc) .^ 2));
+    b = sqrt(sum((pb - pc) .^ 2));
+    
+    el_x = linspace(-a, a, 1000);
+    el_y = b .* (1 - (el_x ./ a) .^ 2) .^ 0.5;
+    
+    el_x = [el_x, flip(el_x)];
+    el_y = [el_y, -flip(el_y)];
+    
+    theta = 45;
+    R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
+    
+    el_pts = [el_x; el_y];
+    el_pts = R * el_pts + pc;
+    h_RR_ellipse.XData = el_pts(1, :);
+    h_RR_ellipse.YData = el_pts(2, :);
+end
 
 function on_main_figure_size_changed(s, e)
     global  Load_btn Load_btn_get_pos ...
@@ -382,6 +481,8 @@ end
 
 function count_for_selected_span()
     global  rb_RR_by_hand rb_RR_auto rb_SS_by_hand rb_SS_auto ...
+            drag_point_RR_a drag_point_RR_b drag_point_RR_center ...
+            h_RR_a h_RR_b h_RR_ellipse ...
             rb_RR_100 rb_RR_95 rb_SS_100 rb_SS_95 ...
             Signals ...
             Selected_time_span ...
@@ -433,11 +534,15 @@ function count_for_selected_span()
     plot(CPSD_f, CPSD);
     
     axes(RRscatter); cla; hold on; grid on;
-    [sc_x, sc_y, el_x, el_y, el_params_RR, ax, ay, bx, by] = calc_scatter_ellipse(RRy, dots_percentage_RR);
+    [sc_x, sc_y, el_x, el_y, el_params_RR, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(RRy, dots_percentage_RR);
     plot(sc_x, sc_y, '*b');
-    plot(ax, ay, 'c', 'LineWidth', 2);
-    plot(bx, by, 'm', 'LineWidth', 2);
-    plot(el_x, el_y, 'r', 'LineWidth', 2);
+    h_RR_a = plot(ax, ay, 'c', 'LineWidth', 2);
+    h_RR_b = plot(bx, by, 'm', 'LineWidth', 2);
+    h_RR_ellipse = plot(el_x, el_y, 'r', 'LineWidth', 2);
+    
+    drag_point_RR_a = drag_point_RR_a.Draw(ax(end), ay(end));
+    drag_point_RR_b = drag_point_RR_b.Draw(bx(end), by(end));
+    drag_point_RR_center = drag_point_RR_center.Draw(x0, y0);    
     
     range_x = max(sc_x) - min(sc_x);
     range_y = max(sc_y) - min(sc_y);
