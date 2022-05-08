@@ -17,6 +17,11 @@ function inds_matrix = find_power_spans(Td, power)
         power_change_moments = [1; power_change_moments];
     end
     
+    if isempty(power_change_moments)
+        inds_matrix = [];
+        return;
+    end
+    
     % Ищем конец последнего промежутка
     last_n = power_change_moments(end);
     last_span_end = find(power_diff(last_n : end) < 0, 1);

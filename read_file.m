@@ -4,7 +4,12 @@ function content = read_file(path)
     % Имя пациента и дата снятия сигнала
     content.Name = strtrim(fgetl(f_id));
     % Набор сигналов в файле
-    columns = split(strtrim(fgetl(f_id)), ';', 1);
+    columns = strtrim(fgetl(f_id));
+    if columns(end) == ';'
+        columns = columns(1 : end - 1);
+    end
+    
+    columns = split(columns, ';', 1);
 
     fclose(f_id);
     

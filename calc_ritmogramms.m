@@ -1,4 +1,4 @@
-function [RRx, RRy, SSx, SSy] = calc_ritmogramms(signals, t_span)
+function [RRx, RRy, SSx, SSy] = calc_ritmogramms(signals, t_span, RR_max_diff, SS_max_diff)
     t = signals.Time;
     
     if (nargin == 1)
@@ -22,6 +22,8 @@ function [RRx, RRy, SSx, SSy] = calc_ritmogramms(signals, t_span)
     RRx = RR_starts;
     RRy = RR_lenghts;
     
+    [RRx, RRy] = remove_ritmogramm_outliers(RRx, RRy, RR_max_diff);
+    
     % то же самое, что и с ритмограммой ЭКГ
     SS_inds = logical(signals.Sis);
     SS_starts = t(SS_inds);
@@ -34,4 +36,6 @@ function [RRx, RRy, SSx, SSy] = calc_ritmogramms(signals, t_span)
     
     SSx = SS_starts;
     SSy = SS_lenghts;
+    
+    [SSx, SSy] = remove_ritmogramm_outliers(SSx, SSy, SS_max_diff);
 end
