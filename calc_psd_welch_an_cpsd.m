@@ -1,7 +1,5 @@
 function [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f] = calc_psd_welch_an_cpsd(t, RRx, RRy, SSx, SSy)
-    w = 100;
-    noverlap = round(w .* 0.5);
-    nfft = 128;
+    nfft = 500;
     
     Fs = 4; % Hz
     Ts = 1 / Fs; % sec
@@ -39,18 +37,29 @@ function [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f] = calc_psd_welch_an_cpsd
     RR_int = detrend(RR_int);
     SS_int = detrend(SS_int);
     
+    % Применение окна
+    window = tukeywin(length(t_interp), 0.25);
+    
+    % СПМ периодограммным методом
+    [RRpsd, RRpsd_f] = periodogram(RR_int, window, nfft, Fs);
+    [SSpsd, SSpsd_f] = periodogram(SS_int, window, nfft, Fs);
+    
+%     % СПМ Уэлча
+%     [RRpsd, RRpsd_f] = pwelch(RR_int, w, noverlap, nfft, Fs);
+%     [SSpsd, SSpsd_f] = pwelch(SS_int, w, noverlap, nfft, Fs);
+    
+    % Кросс-СПМ
+    w = 100;
+    
+    % Коррекция размера окна
     if length(RR_int) < w
         w = length(RR_int);
     end
     if length(SS_int) < w
         w = length(SS_int);
     end
-    
-    % СПМ Уэлча
-    [RRpsd, RRpsd_f] = pwelch(RR_int, w, noverlap, nfft, Fs);
-    [SSpsd, SSpsd_f] = pwelch(SS_int, w, noverlap, nfft, Fs);
-    
-    % Кросс-СПМ
+
+    noverlap = round(w .* 0.5);
     [CPSD, CPSD_f] = cpsd(RR_int, SS_int, w, noverlap, nfft, Fs);
     
     % Кросс СПМ возвращается в виде комплексных чисел, берем от них амплитуду

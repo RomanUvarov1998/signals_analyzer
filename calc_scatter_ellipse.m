@@ -1,15 +1,15 @@
-function [sc_x, sc_y, el_x, el_y, el_params, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(intervals, dots_percentage)
+function [sc_x, sc_y, el_x, el_y, el_params, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(intervals)
     sc_x = intervals(1 : end - 1);
     sc_y = intervals(2 : end);
     
     assert(length(sc_x) == length(sc_y));
-    N = length(sc_x);
     
 %     figure(4), cla, hold on, grid on; %
     
     lens = sqrt(sc_x .^ 2 + sc_y .^ 2);
     tangents = sc_y ./ sc_x;
     alphas = atand(tangents);
+    
     phi = zeros(size(alphas));
     phi(alphas > 45) = alphas(alphas > 45) - 45;
     phi(alphas == 45) = 0;
@@ -18,26 +18,11 @@ function [sc_x, sc_y, el_x, el_y, el_params, ax, ay, bx, by, x0, y0] = calc_scat
     tx = lens .* cosd(phi);
     ty = lens .* sind(phi);
     
-    assert(0.0 < dots_percentage && dots_percentage <= 1);
-    
-    dp = 1.0 - dots_percentage;
-    p_from = dp / 2;
-    p_to = 1.0 - dp / 2;
-    
-    ind_from = round(p_from * N);
-    ind_to = round(p_to * N);
-    
-    ind_from = max(1, ind_from);
-    ind_to = max(N, ind_to);
-    
-    tx = sort(tx);
-    ty = sort(ty);
-    
-    tx = tx(ind_from : ind_to);
-    ty = ty(ind_from : ind_to);
+%     scatter(tx, ty, '*b'); %
+%     scatter(sc_x, sc_y, '*r'); %
     
     ell_len = max(tx) - min(tx);
-    ell_wid = max(ty) - min(ty);
+    ell_wid = (max(ty) - min(ty)) * 2;
     
     a = ell_len / 2;
     b = ell_wid / 2;
