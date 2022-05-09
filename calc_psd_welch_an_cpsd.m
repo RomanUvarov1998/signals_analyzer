@@ -1,4 +1,4 @@
-function [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f] = calc_psd_welch_an_cpsd(t, RRx, RRy, SSx, SSy)
+function [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f, RR_VLF, RR_LF, RR_HF, SS_VLF, SS_LF, SS_HF] = calc_psd_welch_an_cpsd(t, RRx, RRy, SSx, SSy)
     nfft = 500;
     
     Fs = 4; % Hz
@@ -69,4 +69,11 @@ function [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f] = calc_psd_welch_an_cpsd
     RRpsd_f = RRpsd_f ./ 1000;
     SSpsd_f = SSpsd_f ./ 1000;
     CPSD_f = CPSD_f ./ 1000;
+		
+    RR_VLF = sum(RRpsd(0.003 <= RRpsd_f & RRpsd_f <= 0.04));
+    RR_LF = sum(RRpsd(0.04 <= RRpsd_f & RRpsd_f <= 0.15));
+    RR_HF = sum(RRpsd(0.15 <= RRpsd_f & RRpsd_f <= 0.4));
+    SS_VLF = sum(SSpsd(0.003 <= SSpsd_f & SSpsd_f <= 0.04));
+    SS_LF = sum(SSpsd(0.04 <= SSpsd_f & SSpsd_f <= 0.15));
+    SS_HF = sum(SSpsd(0.15 <= SSpsd_f & SSpsd_f <= 0.4));
 end
