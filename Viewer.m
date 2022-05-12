@@ -229,19 +229,20 @@ classdef Viewer < handle
             obj.EllipseTable = uitable( ...
                             tab_ellipse, ...
                             'Units', 'pixels',...
+                            'FontSize',  10, ...
                             'Position', obj.EllipseTable_get_pos(fw, fh));
             obj.EllipseTable.ColumnEditable = false;
-            obj.EllipseTable.ColumnName = { 'ЭКГ', 'АД' };
-            obj.EllipseTable.RowName = [ ...
-                    "Длина облака, мс"; ...
-                    "Ширина облака, мс"; ...
-                    "Площадь облака, мс^2"; ...
-                    "Мср, мс";
-                    "RR(SS)_min, мс"; ...
-                    "RR(SS)_max, мс"; ...
-                    "Размах RR(SS), мс"; ...
-                    "Mo, мс" ...
-            ];
+            obj.EllipseTable.ColumnName = { 'Величина', 'ЭКГ', 'АД' };
+            Data = cell(8, 3);
+            Data{1, 1} = 'Длина облака, мс';
+            Data{2, 1} = 'Ширина облака, мс';
+            Data{3, 1} = 'Площадь облака, мс^2';
+            Data{4, 1} = 'Мср, мс';
+            Data{5, 1} = 'RR(SS)_min, мс';
+            Data{6, 1} = 'RR(SS)_max, мс';
+            Data{7, 1} = 'Размах RR(SS), мс';
+            Data{8, 1} = 'Mo, мс';
+            obj.EllipseTable.Data = Data;
             obj.EllipseTable.ColumnWidth = 'fit';
 
             %--------------------------- 'Спектры' tab --------------------------
@@ -301,14 +302,15 @@ classdef Viewer < handle
             obj.PSDTable = uitable( ...
                             tab_psd, ...
                             'Units', 'pixels',...
+                            'FontSize',  10, ...
                             'Position', obj.PSDTable_get_pos(fw, fh));
             obj.PSDTable.ColumnEditable = false;
-            obj.PSDTable.ColumnName = { 'ЭКГ', 'АД' };
-            obj.PSDTable.RowName = [ ...
-                    "VLF (от 0,003 до 0,04 Гц), мс^2"; ...
-                    "LF (от 0,04 до 0,15 Гц), мс^2"; ...
-                    "HF (от 0,15 до 0,4 Гц), мс^2"; ...
-            ];
+            obj.PSDTable.ColumnName = { 'Величина', 'ЭКГ', 'АД' };
+            Data = cell(3, 3);
+            Data{1, 1} = 'VLF (0,003..0,04 Гц), мс^2';
+            Data{2, 1} = 'LF (0,04..0,15 Гц), мс^2';
+            Data{3, 1} = 'HF (0,15..0,4 Гц), мс^2';
+            obj.PSDTable.Data = Data;
             obj.PSDTable.ColumnWidth = 'fit';
 
             %--------------------------- 'Графики' tab --------------------------
@@ -572,13 +574,13 @@ classdef Viewer < handle
 					obj.h_RR_ellipse.XData = el_pts(1, :);
 					obj.h_RR_ellipse.YData = el_pts(2, :);
 					
-					Data = obj.EllipseTable.Data;
+					Data = obj.EllipseTable.Data(1 : 3, 2 : end);
 					
 					Data{1,1} = 1000 * a * 2; % ell_len
 					Data{2,1} = 1000 * b * 2; % ell_wid
 					Data{3,1} = 1000 * 1000 * pi * a * b; % square
 					
-					obj.EllipseTable.Data = Data;
+					obj.EllipseTable.Data(1 : 3, 2 : end) = Data;
 			end
 
 			function on_point_drag_SS(obj)					
@@ -657,13 +659,13 @@ classdef Viewer < handle
 					obj.h_SS_ellipse.XData = el_pts(1, :);
 					obj.h_SS_ellipse.YData = el_pts(2, :);
 					
-					Data = obj.EllipseTable.Data;
+					Data = obj.EllipseTable.Data(1 : 3, 2 : end);
 					
 					Data{1,2} = 1000 * a * 2; % ell_len
 					Data{2,2} = 1000 * b * 2; % ell_wid
 					Data{3,2} = 1000 * 1000 * pi * a * b; % square
 					
-					obj.EllipseTable.Data = Data;
+					obj.EllipseTable.Data(1 : 3, 2 : end) = Data;
 			end
 
 			function on_main_figure_size_changed(obj)
@@ -871,138 +873,137 @@ classdef Viewer < handle
 					obj.count_for_selected_span(signal_name, true);
 			end
 
-			function [PSD_Data, Ellipse_Data] = count_for_selected_span(obj, to_recount, do_plotting)									
-					if isempty(obj.Selected_time_span)
-							return;
-					end
-					
-					if do_plotting
-							obj.text_max_diff_RR.Enable = 'on';
-							obj.edit_max_diff_RR.Enable = 'on';
-							obj.text_max_diff_SS.Enable = 'on';
-							obj.edit_max_diff_SS.Enable = 'on';
-					end
-					
-					t = obj.Signals.Time;
-					
-					t_span = t(t >= obj.Selected_time_span(1) & t <= obj.Selected_time_span(2));
-					
-					[RRx, RRy, SSx, SSy, RRx_old, RRy_old, SSx_old, SSy_old] = calc_ritmogramms( ...
-							obj.Signals, ...
-							t_span, ...
-							obj.RR_max_diff, ...
-							obj.SS_max_diff);
-					
-					[RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f, RR_VLF, RR_LF, RR_HF, SS_VLF, SS_LF, SS_HF] = calc_psd_welch_an_cpsd( ...
-							t_span, RRx, RRy, SSx, SSy);
-					
-					Ellipse_Data = obj.EllipseTable.Data;
-					
-					if contains(to_recount, 'RR')
-							[sc_x, sc_y, el_x, el_y, el_params_RR, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(RRy);
-							
-							if do_plotting
-									axes(obj.RRrg_axes); cla; hold on; grid on;
-									stem(RRx_old, RRy_old, '.');
-									stem(RRx, RRy, '.');
-									xlabel('Время, с');
-									ylabel('Длительность, с');
+        function [PSD_Data, Ellipse_Data] = count_for_selected_span(obj, to_recount, do_plotting)									
+            if isempty(obj.Selected_time_span)
+                return;
+            end
 
-									axes(obj.RRpsd_axes); cla; hold on; grid on;
-									plot(RRpsd_f, RRpsd);
+            if do_plotting
+                obj.text_max_diff_RR.Enable = 'on';
+                obj.edit_max_diff_RR.Enable = 'on';
+                obj.text_max_diff_SS.Enable = 'on';
+                obj.edit_max_diff_SS.Enable = 'on';
+            end
 
-									axes(obj.RRscatter); cla; hold on; grid on;
-									plot(RRy_old(1 : end - 1), RRy_old(2 : end), '.k');
-									plot(sc_x, sc_y, '.b');
-									obj.h_RR_a = plot(ax, ay, 'c', 'LineWidth', 2);
-									obj.h_RR_b = plot(bx, by, 'm', 'LineWidth', 2);
-									obj.h_RR_ellipse = plot(el_x, el_y, 'r', 'LineWidth', 2);
+            t = obj.Signals.Time;
 
-									obj.drag_point_RR_a = obj.drag_point_RR_a.Draw(ax(end), ay(end));
-									obj.drag_point_RR_b = obj.drag_point_RR_b.Draw(bx(end), by(end));
-									obj.drag_point_RR_center = obj.drag_point_RR_center.Draw(x0, y0);    
+            t_span = t(t >= obj.Selected_time_span(1) & t <= obj.Selected_time_span(2));
 
-									range_x = max(sc_x) - min(sc_x);
-									range_y = max(sc_y) - min(sc_y);
-									range = max(range_x, range_y);
+            [RRx, RRy, SSx, SSy, RRx_old, RRy_old, SSx_old, SSy_old] = calc_ritmogramms( ...
+                    obj.Signals, ...
+                    t_span, ...
+                    obj.RR_max_diff, ...
+                    obj.SS_max_diff);
 
-									xlim([min(sc_x) - range * 0.4, min(sc_x) + range * 1.4]);
-									ylim([min(sc_y) - range * 0.4, min(sc_y) + range * 1.4]);
-							end
-							
-							Ellipse_Data{1, 1} = 1000 * el_params_RR.ell_len;
-							Ellipse_Data{2, 1} = 1000 * el_params_RR.ell_wid;
-							Ellipse_Data{3, 1} = 1000 * 1000 * el_params_RR.square;
-							Ellipse_Data{4, 1} = 1000 * el_params_RR.m_sr;
-							Ellipse_Data{5, 1} = 1000 * el_params_RR.interv_min;
-							Ellipse_Data{6, 1} = 1000 * el_params_RR.interv_max;
-							Ellipse_Data{7, 1} = 1000 * el_params_RR.interv_range;
-							Ellipse_Data{8, 1} = 1000 * el_params_RR.mo;
-					end
-					
-					if contains(to_recount, 'SS')
-							[sc_x, sc_y, el_x, el_y, el_params_SS, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(SSy);
-							
-							if do_plotting
-									axes(obj.SSrg_axes); cla; hold on; grid on;
-									stem(SSx_old, SSy_old, '.');
-									stem(SSx, SSy, '.');
-									xlabel('Время, с');
-									ylabel('Длительность, с');
+            [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f, RR_VLF, RR_LF, RR_HF, SS_VLF, SS_LF, SS_HF] = calc_psd_welch_an_cpsd( ...
+                    t_span, RRx, RRy, SSx, SSy);
 
-									axes(obj.SSpsd_axes); cla; hold on; grid on;
-									plot(SSpsd_f, SSpsd);
+            Ellipse_Data = obj.EllipseTable.Data(:, 2 : end);
 
-									axes(obj.CPSD_axes); cla; hold on; grid on;
-									plot(CPSD_f, CPSD);
+            if contains(to_recount, 'RR')
+                [sc_x, sc_y, el_x, el_y, el_params_RR, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(RRy);
 
-									axes(obj.SSscatter); cla; hold on; grid on;
-									plot(RRy_old(1 : end - 1), RRy_old(2 : end), '.k');
-									plot(sc_x, sc_y, '.b');
-									obj.h_SS_a = plot(ax, ay, 'c', 'LineWidth', 2);
-									obj.h_SS_b = plot(bx, by, 'm', 'LineWidth', 2);
-									obj.h_SS_ellipse = plot(el_x, el_y, 'r', 'LineWidth', 2);
+                if do_plotting
+                    axes(obj.RRrg_axes); cla; hold on; grid on;
+                    stem(RRx_old, RRy_old, '.');
+                    stem(RRx, RRy, '.');
+                    xlabel('Время, с');
+                    ylabel('Длительность, с');
 
-									obj.drag_point_SS_a = obj.drag_point_SS_a.Draw(ax(end), ay(end));
-									obj.drag_point_SS_b = obj.drag_point_SS_b.Draw(bx(end), by(end));
-									obj.drag_point_SS_center = obj.drag_point_SS_center.Draw(x0, y0);   
+                    axes(obj.RRpsd_axes); cla; hold on; grid on;
+                    plot(RRpsd_f, RRpsd);
 
-									range_x = max(sc_x) - min(sc_x);
-									range_y = max(sc_y) - min(sc_y);
-									range = max(range_x, range_y);
+                    axes(obj.RRscatter); cla; hold on; grid on;
+                    plot(RRy_old(1 : end - 1), RRy_old(2 : end), '.k');
+                    plot(sc_x, sc_y, '.b');
+                    obj.h_RR_a = plot(ax, ay, 'c', 'LineWidth', 2);
+                    obj.h_RR_b = plot(bx, by, 'm', 'LineWidth', 2);
+                    obj.h_RR_ellipse = plot(el_x, el_y, 'r', 'LineWidth', 2);
 
-									xlim([min(sc_x) - range * 0.4, min(sc_x) + range * 1.4]);
-									ylim([min(sc_y) - range * 0.4, min(sc_y) + range * 1.4]);
-							end
-					
-							Ellipse_Data{1, 2} = 1000 * el_params_SS.ell_len;
-							Ellipse_Data{2, 2} = 1000 * el_params_SS.ell_wid;
-							Ellipse_Data{3, 2} = 1000 * 1000 * el_params_SS.square;
-							Ellipse_Data{4, 2} = 1000 * el_params_SS.m_sr;
-							Ellipse_Data{5, 2} = 1000 * el_params_SS.interv_min;
-							Ellipse_Data{6, 2} = 1000 * el_params_SS.interv_max;
-							Ellipse_Data{7, 2} = 1000 * el_params_SS.interv_range;
-							Ellipse_Data{8, 2} = 1000 * el_params_SS.mo;
-					end
-					
-					if do_plotting
-							obj.EllipseTable.Data = Ellipse_Data;
-					end
+                    obj.drag_point_RR_a = obj.drag_point_RR_a.Draw(ax(end), ay(end));
+                    obj.drag_point_RR_b = obj.drag_point_RR_b.Draw(bx(end), by(end));
+                    obj.drag_point_RR_center = obj.drag_point_RR_center.Draw(x0, y0);    
 
-					PSD_Data = obj.PSDTable.Data;
-					PSD_Data{1, 1} = RR_VLF;
-					PSD_Data{1, 2} = SS_VLF;
-					PSD_Data{2, 1} = RR_LF;
-					PSD_Data{2, 2} = SS_LF;
-					PSD_Data{3, 1} = RR_HF;
-					PSD_Data{3, 2} = SS_HF;
-					
-					if do_plotting
-							obj.PSDTable.Data = PSD_Data;
-					end
-			end
+                    range_x = max(sc_x) - min(sc_x);
+                    range_y = max(sc_y) - min(sc_y);
+                    range = max(range_x, range_y);
 
+                    xlim([min(sc_x) - range * 0.4, min(sc_x) + range * 1.4]);
+                    ylim([min(sc_y) - range * 0.4, min(sc_y) + range * 1.4]);
+                end
 
+                Ellipse_Data{1, 1} = 1000 * el_params_RR.ell_len;
+                Ellipse_Data{2, 1} = 1000 * el_params_RR.ell_wid;
+                Ellipse_Data{3, 1} = 1000 * 1000 * el_params_RR.square;
+                Ellipse_Data{4, 1} = 1000 * el_params_RR.m_sr;
+                Ellipse_Data{5, 1} = 1000 * el_params_RR.interv_min;
+                Ellipse_Data{6, 1} = 1000 * el_params_RR.interv_max;
+                Ellipse_Data{7, 1} = 1000 * el_params_RR.interv_range;
+                Ellipse_Data{8, 1} = 1000 * el_params_RR.mo;
+            end
+
+            if contains(to_recount, 'SS')
+                [sc_x, sc_y, el_x, el_y, el_params_SS, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(SSy);
+
+                if do_plotting
+                    axes(obj.SSrg_axes); cla; hold on; grid on;
+                    stem(SSx_old, SSy_old, '.');
+                    stem(SSx, SSy, '.');
+                    xlabel('Время, с');
+                    ylabel('Длительность, с');
+
+                    axes(obj.SSpsd_axes); cla; hold on; grid on;
+                    plot(SSpsd_f, SSpsd);
+
+                    axes(obj.CPSD_axes); cla; hold on; grid on;
+                    plot(CPSD_f, CPSD);
+
+                    axes(obj.SSscatter); cla; hold on; grid on;
+                    plot(RRy_old(1 : end - 1), RRy_old(2 : end), '.k');
+                    plot(sc_x, sc_y, '.b');
+                    obj.h_SS_a = plot(ax, ay, 'c', 'LineWidth', 2);
+                    obj.h_SS_b = plot(bx, by, 'm', 'LineWidth', 2);
+                    obj.h_SS_ellipse = plot(el_x, el_y, 'r', 'LineWidth', 2);
+
+                    obj.drag_point_SS_a = obj.drag_point_SS_a.Draw(ax(end), ay(end));
+                    obj.drag_point_SS_b = obj.drag_point_SS_b.Draw(bx(end), by(end));
+                    obj.drag_point_SS_center = obj.drag_point_SS_center.Draw(x0, y0);   
+
+                    range_x = max(sc_x) - min(sc_x);
+                    range_y = max(sc_y) - min(sc_y);
+                    range = max(range_x, range_y);
+
+                    xlim([min(sc_x) - range * 0.4, min(sc_x) + range * 1.4]);
+                    ylim([min(sc_y) - range * 0.4, min(sc_y) + range * 1.4]);
+                end
+
+                Ellipse_Data{1, 2} = 1000 * el_params_SS.ell_len;
+                Ellipse_Data{2, 2} = 1000 * el_params_SS.ell_wid;
+                Ellipse_Data{3, 2} = 1000 * 1000 * el_params_SS.square;
+                Ellipse_Data{4, 2} = 1000 * el_params_SS.m_sr;
+                Ellipse_Data{5, 2} = 1000 * el_params_SS.interv_min;
+                Ellipse_Data{6, 2} = 1000 * el_params_SS.interv_max;
+                Ellipse_Data{7, 2} = 1000 * el_params_SS.interv_range;
+                Ellipse_Data{8, 2} = 1000 * el_params_SS.mo;
+            end
+
+            if do_plotting
+                obj.EllipseTable.Data(:, 2 : end) = Ellipse_Data;
+            end
+
+            PSD_Data = obj.PSDTable.Data(:, 2 : end);
+            PSD_Data{1, 1} = RR_VLF;
+            PSD_Data{1, 2} = SS_VLF;
+            PSD_Data{2, 1} = RR_LF;
+            PSD_Data{2, 2} = SS_LF;
+            PSD_Data{3, 1} = RR_HF;
+            PSD_Data{3, 2} = SS_HF;
+
+            if do_plotting
+                obj.PSDTable.Data(:, 2 : end) = PSD_Data;
+                obj.PSDTable.ColumnWidth = 'fit';
+            end
+        end
     end
 end
 
