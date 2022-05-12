@@ -426,7 +426,17 @@ classdef Viewer < handle
 							obj.Signals = [];
 							obj.POWER_axes.ButtonDownFcn = [];
 							return;
-					end
+                    end
+                    
+                    last_span_end = obj.Power_spans_inds(end, 2);
+                    fields_names = fieldnames(obj.Signals);
+                    for n = 1 : length(fields_names)
+                        field_name = fields_names{n};
+                        if strcmp(field_name, 'Name'), continue; end
+                        content = obj.Signals.(field_name);
+                        obj.Signals.(field_name) = content(1 : last_span_end);
+                    end
+                    clear content fields_names field_name
 					
 					obj.f.Name = filename;
 					
