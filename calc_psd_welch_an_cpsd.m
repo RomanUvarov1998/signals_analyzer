@@ -9,7 +9,7 @@ function [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f, RR_VLF, RR_LF, RR_HF, SS
     RRx = RRx .* 1000;
     RRy = RRy .* 1000;
     SSx = SSx .* 1000;
-    SSy = SSy .* 1000;
+%     SSy = SSy .* 1000;
     t_interp = t_interp .* 1000;
     % Переводим Гц в кГц
     Fs = Fs .* 1000;
@@ -23,15 +23,15 @@ function [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f, RR_VLF, RR_LF, RR_HF, SS
     pol_info = csaps(SSx, SSy, 1);
     SS_int = ppval(pol_info, t_interp);
     
-%     figure(3); clf; tiledlayout(2, 1);
-%     
-%     nexttile; cla; hold on; grid on;
-%     stem(RRx, RRy);
-%     plot(t_interp, RR_int);
-%     
-%     nexttile; cla; hold on; grid on;
-%     stem(SSx, SSy);
-%     plot(t_interp, SS_int);
+%         figure(3); clf; tiledlayout(2, 1);
+% 
+%         nexttile; cla; hold on; grid on;
+%         stem(RRx, RRy);
+%         plot(t_interp, RR_int);
+% 
+%         nexttile; cla; hold on; grid on;
+%         stem(SSx, SSy);
+%         plot(t_interp, SS_int);
     
     % Убираем постоянную составляющую и линейный тренд
     RR_int = detrend(RR_int);

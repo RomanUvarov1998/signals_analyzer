@@ -1,7 +1,7 @@
 function [RRx, RRy, SSx, SSy, RRx_old, RRy_old, SSx_old, SSy_old] = calc_ritmogramms(signals, t_span, RR_max_diff, SS_max_diff)
     t = signals.Time;
     
-    if (nargin == 1)
+    if isempty(t_span)
         t_span = [t(1), t(end)];
     end
     
@@ -23,21 +23,24 @@ function [RRx, RRy, SSx, SSy, RRx_old, RRy_old, SSx_old, SSy_old] = calc_ritmogr
     RRy = RR_lenghts;
     
     RRx_old = RRx; RRy_old = RRy;
-    [RRx, RRy] = remove_ritmogramm_outliers(RRx, RRy, RR_max_diff);
+    if ~isempty(RRx) || ~isempty(RRy)
+        [RRx, RRy] = remove_ritmogramm_outliers(RRx, RRy, RR_max_diff, 'RR');
+    end
     
     % то же самое, что и с ритмограммой ЭКГ
     SS_inds = logical(signals.Sis);
     SS_starts = t(SS_inds);
     
     SS_span_inds = t_span(1) <= SS_starts & SS_starts <= t_span(end);
-    SS_starts = SS_starts(SS_span_inds);
     
-    SS_lenghts = diff(SS_starts);
-    SS_starts = SS_starts(1 : end - 1);
+    SS_sis = SS_starts(SS_span_inds);
+    SS_values = signals.Press(SS_span_inds); 
     
-    SSx = SS_starts;
-    SSy = SS_lenghts;
+    SSx = SS_sis;
+    SSy = SS_values;
     
     SSx_old = SSx; SSy_old = SSy;
-    [SSx, SSy] = remove_ritmogramm_outliers(SSx, SSy, SS_max_diff);
+    if ~isempty(SSx) || ~isempty(SSy)
+        [SSx, SSy] = remove_ritmogramm_outliers(SSx, SSy, SS_max_diff, 'SS');
+    end
 end

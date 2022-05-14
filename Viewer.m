@@ -24,8 +24,17 @@ classdef Viewer < handle
         CPSD_axes, CPSD_axes_get_pos, 
         SSrg_axes, SSrg_axes_get_pos, 
         PSDTable, PSDTable_get_pos, 
-        PSD_axes, PSD_axes_get_pos, 
-        Ellipses_plots, Ellipses_plots_get_pos,
+        PSD_axes_VLF, PSD_axes_get_pos_VLF, 
+        PSD_axes_LF, PSD_axes_get_pos_LF, 
+        PSD_axes_HF, PSD_axes_get_pos_HF, 
+        Ellipses_plots_len, Ellipses_plots_len_get_pos,
+        Ellipses_plots_wid, Ellipses_plots_wid_get_pos,
+        Ellipses_plots_sq, Ellipses_plots_sq_get_pos,
+        Ellipses_plots_Mcp, Ellipses_plots_Mcp_get_pos,
+        Ellipses_plots_min, Ellipses_plots_min_get_pos,
+        Ellipses_plots_max, Ellipses_plots_max_get_pos,
+        Ellipses_plots_range, Ellipses_plots_range_get_pos,
+        Ellipses_plots_Mo, Ellipses_plots_Mo_get_pos,
         PSD_axes_legend, Ellipses_plots_legend,
         drag_point_RR_a, drag_point_RR_b, drag_point_RR_center,
         drag_point_SS_a, drag_point_SS_b, drag_point_SS_center,
@@ -212,7 +221,7 @@ classdef Viewer < handle
                             'Position', obj.SSrg_axes_get_pos(fw, fh));
             title('Участок интервалов "систола-систола" АД');
             xlabel('Время, с');
-            ylabel('Длительность, с');
+            ylabel('Давление, мм.рт.ст');
 
 
             obj.EllipseTable_get_pos = @(fw, fh) [ ...
@@ -318,33 +327,182 @@ classdef Viewer < handle
             tab_plots = uitab(obj.tg);
             tab_plots.Title = 'Графики';
 
-            obj.PSD_axes_get_pos = @(fw, fh) [ ...
-                            DX,	...
-                            DY*2 + (fh - DY*3)/2 * 1, ....
-                            (fw - DX*2) / 1, ...
-                            (fh - DY*3) / 2 ...
-                    ];
-            obj.PSD_axes = axes( ...
-                            tab_plots, ...
-                            'Units', 'pixels',...
-                            'Position', obj.PSD_axes_get_pos(fw, fh));
-            title('Характеристики спектров');
-            xlabel('Частота, Гц');
-            ylabel('Оценка');
+                DX = 40; DY = 60;
+                
+                % Длина
+                obj.Ellipses_plots_len_get_pos = @(fw, fh) [ ...
+                            DX*1 + (fw - DX*5) / 4 * 0,	...
+                            fh - DY*1 - (fh - DY*4)/3 * 1, ....
+                            (fw - DX*5) / 4, ...
+                            (fh - DY*4) / 3 ...
+                ];
 
-            obj.Ellipses_plots_get_pos = @(fw, fh) [ ...
-                            DX,	...
-                            DY*1 + (fh - DY*3)/2 * 0, ....
-                            (fw - DX*2) / 1, ...
-                            (fh - DY*3) / 2 ...
-                    ];
-            obj.Ellipses_plots = axes( ...
-                            tab_plots, ...
-                            'Units', 'pixels',...
-                            'Position', obj.Ellipses_plots_get_pos(fw, fh));
-            title('Характеристики эллипсов');
-            xlabel('Частота, Гц');
-            ylabel('Оценка');
+                obj.Ellipses_plots_len = axes( ...
+                    tab_plots, ...
+                    'Units', 'pixels',...
+                    'Position', obj.Ellipses_plots_len_get_pos(fw, fh));
+                title('Характеристики спектров');
+                xlabel('Частота, Гц dsfsdf');
+                ylabel('Оценка');
+
+                % Ширина
+                obj.Ellipses_plots_wid_get_pos = @(fw, fh) [ ...
+                            DX*2 + (fw - DX*5) / 4 * 1,	...
+                            fh - DY*1 - (fh - DY*4)/3 * 1, ....
+                            (fw - DX*5) / 4, ...
+                            (fh - DY*4) / 3 ...
+                ];
+
+                obj.Ellipses_plots_wid = axes( ...
+                    tab_plots, ...
+                    'Units', 'pixels',...
+                    'Position', obj.Ellipses_plots_wid_get_pos(fw, fh));
+                title('Характеристики спектров');
+                xlabel('Частота, Гц');
+                ylabel('Оценка');
+
+                % Площадь
+                obj.Ellipses_plots_sq_get_pos = @(fw, fh) [ ...
+                            DX*3 + (fw - DX*5) / 4 * 2,	...
+                            fh - DY*1 - (fh - DY*4)/3 * 1, ....
+                            (fw - DX*5) / 4, ...
+                            (fh - DY*4) / 3 ...
+                ];
+
+                obj.Ellipses_plots_sq = axes( ...
+                    tab_plots, ...
+                    'Units', 'pixels',...
+                    'Position', obj.Ellipses_plots_sq_get_pos(fw, fh));
+                title('Характеристики спектров');
+                xlabel('Частота, Гц');
+                ylabel('Оценка');
+
+                % Мср
+                obj.Ellipses_plots_Mcp_get_pos = @(fw, fh) [ ...
+                            DX*4 + (fw - DX*5) / 4 * 3,	...
+                            fh - DY*1 - (fh - DY*4)/3 * 1, ....
+                            (fw - DX*5) / 4, ...
+                            (fh - DY*4) / 3 ...
+                ];
+
+                obj.Ellipses_plots_Mcp = axes( ...
+                    tab_plots, ...
+                    'Units', 'pixels',...
+                    'Position', obj.Ellipses_plots_Mcp_get_pos(fw, fh));
+                title('Характеристики спектров');
+                xlabel('Частота, Гц');
+                ylabel('Оценка');
+
+                % Мин
+                obj.Ellipses_plots_min_get_pos = @(fw, fh) [ ...
+                            DX*1 + (fw - DX*5) / 4 * 0,	...
+                            fh - DY*2 - (fh - DY*4)/3 * 2, ....
+                            (fw - DX*5) / 4, ...
+                            (fh - DY*4) / 3 ...
+                ];
+
+                obj.Ellipses_plots_min = axes( ...
+                    tab_plots, ...
+                    'Units', 'pixels',...
+                    'Position', obj.Ellipses_plots_min_get_pos(fw, fh));
+                title('Характеристики спектров');
+                xlabel('Частота, Гц');
+                ylabel('Оценка');
+
+                % Макс
+                obj.Ellipses_plots_max_get_pos = @(fw, fh) [ ...
+                            DX*2 + (fw - DX*5) / 4 * 1,	...
+                            fh - DY*2 - (fh - DY*4)/3 * 2, ...
+                            (fw - DX*5) / 4, ...
+                            (fh - DY*4) / 3 ...
+                ];
+
+                obj.Ellipses_plots_max = axes( ...
+                    tab_plots, ...
+                    'Units', 'pixels',...
+                    'Position', obj.Ellipses_plots_max_get_pos(fw, fh));
+                title('Характеристики спектров');
+                xlabel('Частота, Гц');
+                ylabel('Оценка');
+
+                % Размах
+                obj.Ellipses_plots_range_get_pos = @(fw, fh) [ ...
+                            DX*3 + (fw - DX*5) / 4 * 2,	...
+                            fh - DY*2 - (fh - DY*4)/3 * 2, ...
+                            (fw - DX*5) / 4, ...
+                            (fh - DY*4) / 3 ...
+                ];
+
+                obj.Ellipses_plots_range = axes( ...
+                    tab_plots, ...
+                    'Units', 'pixels',...
+                    'Position', obj.Ellipses_plots_range_get_pos(fw, fh));
+                title('Размах');
+                xlabel('Частота, Гц');
+                ylabel('Оценка');
+
+                % Мода
+                obj.Ellipses_plots_Mo_get_pos = @(fw, fh) [ ...
+                            DX*4 + (fw - DX*5) / 4 * 3,	...
+                            fh - DY*2 - (fh - DY*4)/3 * 2, ....
+                            (fw - DX*5) / 4, ...
+                            (fh - DY*4) / 3 ...
+                ];
+
+                % Характеристики спектров
+                obj.Ellipses_plots_Mo = axes( ...
+                    tab_plots, ...
+                    'Units', 'pixels',...
+                    'Position', obj.Ellipses_plots_Mo_get_pos(fw, fh));
+                title('Мода');
+                xlabel('Частота, Гц');
+                ylabel('Оценка');
+                
+                % VLF
+                obj.PSD_axes_get_pos_VLF = @(fw, fh) [ ...
+                            DX*1 + (fw - DX*5) / 4 * 0,	...
+                            fh - DY*3 - (fh - DY*4)/3 * 3, ....
+                            (fw - DX*5) / 4, ...
+                            (fh - DY*4) / 3 ...
+                ];
+                obj.PSD_axes_VLF = axes( ...
+                                tab_plots, ...
+                                'Units', 'pixels',...
+                                'Position', obj.PSD_axes_get_pos_VLF(fw, fh));
+                title('VLF');
+                xlabel('Частота, Гц');
+                ylabel('Оценка');
+
+                % LF
+                obj.PSD_axes_get_pos_LF = @(fw, fh) [ ...
+                            DX*2 + (fw - DX*5) / 4 * 1,	...
+                            fh - DY*3 - (fh - DY*4)/3 * 3, ....
+                            (fw - DX*5) / 4, ...
+                            (fh - DY*4) / 3 ...
+                ];
+                obj.PSD_axes_LF = axes( ...
+                                tab_plots, ...
+                                'Units', 'pixels',...
+                                'Position', obj.PSD_axes_get_pos_LF(fw, fh));
+                title('LF');
+                xlabel('Частота, Гц');
+                ylabel('Оценка');
+
+                % HF
+                obj.PSD_axes_get_pos_HF = @(fw, fh) [ ...
+                            DX*3 + (fw - DX*5) / 4 * 2,	...
+                            fh - DY*3 - (fh - DY*4)/3 * 3, ....
+                            (fw - DX*5) / 4, ...
+                            (fh - DY*4) / 3 ...
+                ];
+                obj.PSD_axes_HF = axes( ...
+                                tab_plots, ...
+                                'Units', 'pixels',...
+                                'Position', obj.PSD_axes_get_pos_HF(fw, fh));
+                title('HF');
+                xlabel('Частота, Гц');
+                ylabel('Оценка');
+
             
             obj.PSD_axes_legend = [];
             obj.Ellipses_plots_legend = [];
@@ -442,9 +600,7 @@ classdef Viewer < handle
 					
 					obj.draw_ritmograms_and_power(0);
 					
-					obj.count_all_graphics();
-					
-					b = true;
+					b = obj.count_all_graphics();
 			end
 			
 			function close(obj)
@@ -704,8 +860,17 @@ classdef Viewer < handle
 				obj.CPSD_axes.Position = obj.CPSD_axes_get_pos(fw, fh);
 				obj.PSDTable.Position = obj.PSDTable_get_pos(fw, fh);
 				
-				obj.PSD_axes.Position = obj.PSD_axes_get_pos(fw, fh);
-				obj.Ellipses_plots.Position = obj.Ellipses_plots_get_pos(fw, fh);
+                obj.Ellipses_plots_len.Position = obj.Ellipses_plots_len_get_pos(fw, fh);
+                obj.Ellipses_plots_wid.Position = obj.Ellipses_plots_wid_get_pos(fw, fh);
+                obj.Ellipses_plots_sq.Position   = obj.Ellipses_plots_sq_get_pos(fw, fh);
+                obj.Ellipses_plots_Mcp.Position = obj.Ellipses_plots_Mcp_get_pos(fw, fh);
+                obj.Ellipses_plots_min.Position = obj.Ellipses_plots_min_get_pos(fw, fh);
+                obj.Ellipses_plots_max.Position = obj.Ellipses_plots_max_get_pos(fw, fh);
+                obj.Ellipses_plots_range.Position = obj.Ellipses_plots_range_get_pos(fw, fh);
+                obj.Ellipses_plots_Mo.Position   = obj.Ellipses_plots_Mo_get_pos(fw, fh);
+                obj.PSD_axes_VLF.Position = obj.PSD_axes_get_pos_VLF(fw, fh);
+                obj.PSD_axes_LF.Position = obj.PSD_axes_get_pos_LF(fw, fh);
+                obj.PSD_axes_HF.Position = obj.PSD_axes_get_pos_HF(fw, fh);
 				
 				if ~isempty(obj.PSD_axes_legend)
 					obj.PSD_axes_legend.Location = 'best';
@@ -715,7 +880,7 @@ classdef Viewer < handle
 				end
 		end
 		
-			function count_all_graphics(obj)
+			function b = count_all_graphics(obj)
                 PSD_Datas = zeros(3, 2, size(obj.Power_spans_inds, 1));
                 Ellipse_Datas = zeros(8, 2, size(obj.Power_spans_inds, 1));
 
@@ -724,37 +889,65 @@ classdef Viewer < handle
                     n_end = obj.Power_spans_inds(n, 2);
                     obj.Selected_time_span = [obj.Signals.Time(n_begin), obj.Signals.Time(n_end)];
                     [PSD_Data, Ellipse_Data] = obj.count_for_selected_span('RRSS', false);
+                    
+                    if isempty(PSD_Data) || isempty(Ellipse_Data)
+                        errordlg("Ошибка в структуре файла", "Не все диапазоны мощности имеют размеченные систолы и R-зубцы");
+                        b = false;
+                        return;
+                    end
+                    
                     PSD_Datas(:, :, n) = cell2mat(PSD_Data);
                     Ellipse_Datas(:, :, n) = cell2mat(Ellipse_Data);
                 end
-
-                axes(obj.PSD_axes); cla; hold on; grid on;
+                
+				% [арактеристики спектра
+                axes(obj.PSD_axes_VLF); cla; hold on; grid on;
                 stem(reshape(PSD_Datas(1, 1, :), 1, 5));
                 stem(reshape(PSD_Datas(1, 2, :), 1, 5));
+                
+                axes(obj.PSD_axes_LF); cla; hold on; grid on;
                 stem(reshape(PSD_Datas(2, 1, :), 1, 5));
                 stem(reshape(PSD_Datas(2, 2, :), 1, 5));
+                
+                axes(obj.PSD_axes_HF); cla; hold on; grid on;
                 stem(reshape(PSD_Datas(3, 1, :), 1, 5));
                 stem(reshape(PSD_Datas(3, 2, :), 1, 5));
                 obj.PSD_axes_legend = legend(["VLF ЭКГ", "VLF АД", "LF ЭКГ", "LF АД", "HF ЭКГ", "HF АД"], ...
                     'Location', 'best');
-
-                axes(obj.Ellipses_plots); cla; hold on; grid on;
+                
+				% [арактеристики 'ллипсов
+                axes(obj.Ellipses_plots_len); cla; hold on; grid on;        
                 stem(reshape(Ellipse_Datas(1, 1, :), 1, 5));
                 stem(reshape(Ellipse_Datas(1, 2, :), 1, 5));
+                
+                axes(obj.Ellipses_plots_wid); cla; grid on; hold on;
                 stem(reshape(Ellipse_Datas(2, 1, :), 1, 5));
                 stem(reshape(Ellipse_Datas(2, 2, :), 1, 5));
+
+                axes(obj.Ellipses_plots_sq); cla; grid on; hold on;
                 stem(reshape(Ellipse_Datas(3, 1, :), 1, 5));
                 stem(reshape(Ellipse_Datas(3, 2, :), 1, 5));
+
+                axes(obj.Ellipses_plots_Mcp); cla; grid on; hold on;
                 stem(reshape(Ellipse_Datas(4, 1, :), 1, 5));
                 stem(reshape(Ellipse_Datas(4, 2, :), 1, 5));
+
+                axes(obj.Ellipses_plots_min); cla; grid on; hold on;
                 stem(reshape(Ellipse_Datas(5, 1, :), 1, 5));
                 stem(reshape(Ellipse_Datas(5, 2, :), 1, 5));
+
+                axes(obj.Ellipses_plots_max); cla; grid on; hold on;
                 stem(reshape(Ellipse_Datas(6, 1, :), 1, 5));
                 stem(reshape(Ellipse_Datas(6, 2, :), 1, 5));
+
+                axes(obj.Ellipses_plots_range); cla; grid on; hold on;
                 stem(reshape(Ellipse_Datas(7, 1, :), 1, 5));
                 stem(reshape(Ellipse_Datas(7, 2, :), 1, 5));
+
+                axes(obj.Ellipses_plots_Mo); cla; grid on; hold on;        
                 stem(reshape(Ellipse_Datas(8, 1, :), 1, 5));
                 stem(reshape(Ellipse_Datas(8, 2, :), 1, 5));
+                
                 obj.Ellipses_plots_legend = legend([ ...
                     "Длина облака ЭКГ, мс",     "Длина облака АД, мс", ...
                     "Ширина облака ЭКГ, мс",    "Ширина облака АД, мс", ...
@@ -770,7 +963,10 @@ classdef Viewer < handle
                 n_begin = obj.Power_spans_inds(n, 1);
                 n_end = obj.Power_spans_inds(n, 2);
                 obj.Selected_time_span = [obj.Signals.Time(n_begin), obj.Signals.Time(n_end)];
+                obj.draw_ritmograms_and_power(1);
                 obj.count_for_selected_span('RRSS', true);
+                
+                b = true;
 			end
 
 			function b = check_has_column(obj, name, ui_name)
@@ -885,6 +1081,8 @@ classdef Viewer < handle
 
         function [PSD_Data, Ellipse_Data] = count_for_selected_span(obj, to_recount, do_plotting)									
             if isempty(obj.Selected_time_span)
+                PSD_Data = [];
+                Ellipse_Data = [];
                 return;
             end
 
@@ -904,6 +1102,12 @@ classdef Viewer < handle
                     t_span, ...
                     obj.RR_max_diff, ...
                     obj.SS_max_diff);
+                
+            if isempty(RRx) || isempty(RRy) || isempty(SSx) || isempty(SSy)
+                PSD_Data = [];
+                Ellipse_Data = [];
+                return;
+            end
 
             [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f, RR_VLF, RR_LF, RR_HF, SS_VLF, SS_LF, SS_HF] = calc_psd_welch_an_cpsd( ...
                     t_span, RRx, RRy, SSx, SSy);
@@ -925,6 +1129,7 @@ classdef Viewer < handle
 
                     axes(obj.RRscatter); cla; hold on; grid on;
                     plot(RRy_old(1 : end - 1), RRy_old(2 : end), '.k');
+                    plot(RRy(1 : end - 1), RRy(2 : end), 'ob');
                     plot(sc_x, sc_y, '.b');
                     obj.h_RR_a = plot(ax, ay, 'c', 'LineWidth', 2);
                     obj.h_RR_b = plot(bx, by, 'm', 'LineWidth', 2);
@@ -969,7 +1174,8 @@ classdef Viewer < handle
                     plot(CPSD_f, CPSD);
 
                     axes(obj.SSscatter); cla; hold on; grid on;
-                    plot(RRy_old(1 : end - 1), RRy_old(2 : end), '.k');
+                    plot(SSy_old(1 : end - 1), SSy_old(2 : end), '.k');
+                    plot(SSy(1 : end - 1), SSy(2 : end), 'ob');
                     plot(sc_x, sc_y, '.b');
                     obj.h_SS_a = plot(ax, ay, 'c', 'LineWidth', 2);
                     obj.h_SS_b = plot(bx, by, 'm', 'LineWidth', 2);
