@@ -18,13 +18,13 @@ function [RRx, RRy] = remove_ritmogramm_outliers(RRx, RRy, max_diff, signal_type
             end
         end
     
-    elseif strcmp(signal_type, 'SS')
+    elseif strcmp(signal_type, 'SS') || strcmp(signal_type, 'DD')
     
-        N = 6;
+        N = round(max_diff);
         RRy_out = zeros(size(RRy));
         RRy_out(1 : N) = RRy(1 : N);
-        for n = N + 1 : length(RRy)
-            RRy_out(n) = median(RRy(n - N : n));
+        for n = N : length(RRy)
+            RRy_out(n) = median(RRy(n - N + 1 : n));
         end
 
         RRy = RRy_out;

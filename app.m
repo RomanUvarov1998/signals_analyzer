@@ -8,6 +8,7 @@ viewers = [];
 f = figure(1); clf;
 f.SizeChangedFcn = @(s, e) on_main_figure_size_changed(s);
 f.Name = 'Программный комплекс графического анализа сердечного ритма';
+f.CloseRequestFcn = @(s, e) on_main_window_closed();
 
 DX = 40;
 DY = 60;
@@ -98,5 +99,16 @@ function on_wiever_closed(w)
         end
     end
 
+    close force;
+end
+
+function on_main_window_closed()
+    global viewers
+    if ~isempty(viewers)
+        for w = viewers
+            close(w.f)
+        end
+    end
+    viewers = [];
     close force;
 end

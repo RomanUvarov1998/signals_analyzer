@@ -6,7 +6,7 @@ classdef Viewer < handle
         f
     end
     properties (Access = private)
-        Signals, Power_spans_inds, Td, Selected_time_span, RR_max_diff, SS_max_diff,
+        Signals, Power_spans_inds, Td, Selected_time_span, RR_max_diff, SS_max_diff,DD_max_diff
         RG_ECG_axes, RG_ECG_get_pos,
         RG_ABP_axes, RG_ABP_get_pos,
         POWER_axes, POWER_get_pos,
@@ -16,14 +16,21 @@ classdef Viewer < handle
         RRrg_axes, RRrg_axes_get_pos, 
         RRpsd_axes, RRpsd_axes_get_pos, 
         RRscatter, RRscatter_get_pos, 
-        SSScatter_settings, SSScatter_settings_get_pos, 
+        SSScatter_settings, SSScatter_settings_get_pos,
+		DDScatter_settings, DDScatter_settings_get_pos, 
         text_max_diff_SS, edit_max_diff_SS, 
+		text_max_diff_DD, edit_max_diff_DD,
         SSpsd_axes, SSpsd_axes_get_pos, 
+		DDpsd_axes, DDpsd_axes_get_pos,
         SSscatter, SSscatter_get_pos, 
+		DDscatter, DDscatter_get_pos, 
         EllipseTable, EllipseTable_get_pos, 
         CPSD_axes, CPSD_axes_get_pos, 
         SSrg_axes, SSrg_axes_get_pos, 
-        PSDTable, PSDTable_get_pos, 
+		DDrg_axes, DDrg_axes_get_pos,
+        PSDTableRR, PSDTableRR_get_pos, 
+        PSDTableSS, PSDTableSS_get_pos, 
+        PSDTableDD, PSDTableDD_get_pos, 
         PSD_axes_VLF, PSD_axes_get_pos_VLF, 
         PSD_axes_LF, PSD_axes_get_pos_LF, 
         PSD_axes_HF, PSD_axes_get_pos_HF, 
@@ -35,11 +42,17 @@ classdef Viewer < handle
         Ellipses_plots_max, Ellipses_plots_max_get_pos,
         Ellipses_plots_range, Ellipses_plots_range_get_pos,
         Ellipses_plots_Mo, Ellipses_plots_Mo_get_pos,
+        IndicatorsTableRR, IndicatorsTableRR_get_pos,
+        IndicatorsTableSS, IndicatorsTableSS_get_pos,
+        IndicatorsTableDD, IndicatorsTableDD_get_pos,
+        ExportBtn, ExportBtn_get_pos,
         PSD_axes_legend, Ellipses_plots_legend,
         drag_point_RR_a, drag_point_RR_b, drag_point_RR_center,
         drag_point_SS_a, drag_point_SS_b, drag_point_SS_center,
+        drag_point_DD_a, drag_point_DD_b, drag_point_DD_center,
         h_RR_a, h_RR_b, h_RR_ellipse,
         h_SS_a, h_SS_b, h_SS_ellipse,
+        h_DD_a, h_DD_b, h_DD_ellipse,
     end
     
     methods
@@ -48,8 +61,9 @@ classdef Viewer < handle
             obj.f.Name = '';
 						
             obj.RR_max_diff = 5;
-            obj.SS_max_diff = 5;
-            
+            obj.SS_max_diff = 1;
+            obj.DD_max_diff = 1;
+			
             % GUI elements
             DX = 40;
             DY = 60;
@@ -85,7 +99,7 @@ classdef Viewer < handle
                     'Position', obj.RG_ABP_get_pos(fw, fh));
             title('Интервалы "систола-систола" АД');
             xlabel('Время начала, с');
-            ylabel('Длительность, с');
+            ylabel('Давление, мм рт. ст.');
 
             obj.POWER_get_pos = @(fw, fh) [ ...
                     DX,         DY*1 + (fh - DY*4) / 3 * 0, ...
@@ -100,17 +114,25 @@ classdef Viewer < handle
 						
             %--------------------------- 'Скаттерограмма' tab --------------------------
 
-            tab_ellipse = uitab(obj.tg);
-            tab_ellipse.Title = 'Скаттерограмма';
+            % RR
+						
+            tab_scatter = uitab(obj.tg);
+            tab_scatter.Title = 'Скаттерограмма';
 
-            SETTINGS_WIDTH = 130;
-
+            SETTINGS_WIDTH = 0.2*fw;
+         
+            DX = 5;
+            DY = 5;
+						DY_UP = 40;
+			
             obj.RRScatter_settings_get_pos = @(fw, fh) [ ...
-                            DX,             DY*2 + (fh - DY*3) / 2 * 1, ...
-                            SETTINGS_WIDTH-30,  (fh - DY*3) / 2 ...
-                    ];
+							DX, ...            
+							DY*3 + (fh - DY*4 - DY_UP - 15 - 60 - 60)/3 * 2 + 60 + 60, ...
+							SETTINGS_WIDTH,...  
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+						];
             obj.RRScatter_settings = uipanel( ...
-                    tab_ellipse, ...
+                    tab_scatter, ...
                     'Units','pixels',...
                     'Position', obj.RRScatter_settings_get_pos(fw, fh), ...
                     'BackGroundColor', [0.93 0.93 0.93]);
@@ -134,42 +156,44 @@ classdef Viewer < handle
                     'HandleVisibility', 'off');
 
             obj.RRscatter_get_pos = @(fw, fh) [ ...
-                            DX + SETTINGS_WIDTH + DX,	...
-                            fh - DY - (fh - DY*3)/2 ...
-                            (fh - DY*3)/2, ... %(fw - DX*5)/4, ...
-                            (fh - DY*3)/2 ...
-                    ];
+							DX + SETTINGS_WIDTH + DX + 40,	...
+							DY*3 + (fh - DY*4 - DY_UP - 15 - 60 - 60)/3 * 2 + 60 + 60, ...
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+						];
             obj.RRscatter = axes( ...
-                            tab_ellipse, ...
+                            tab_scatter, ...
                             'Units', 'pixels',...
                             'Position', obj.RRscatter_get_pos(fw, fh), ...
                             'DataAspectRatio', [1, 1, 1]);
-            title('Скаттерограмма ритмограммы ЭКГ');
+            title('Скаттерограмма ЭКГ');
             xlabel('RR_i, с');
             ylabel('RR_{i-1}, с');
 
             obj.RRrg_axes_get_pos = @(fw, fh) [ ...
-                            DX + SETTINGS_WIDTH + DX + (fh - DY*3)/2 + DX, ...
-                            DY*2 + (fh - DY*3)/2 * 1, ...
-                            (fw - DX - SETTINGS_WIDTH - DX - (fh - DY*3)/2 - DX - DX*2) / 2, ...
-                            (fh - DY*3) / 2 ...
-                    ];
+							DX + SETTINGS_WIDTH + DX + 40 + (fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 + DX + 40,	...
+							DY*3 + (fh - DY*4 - DY_UP - 15 - 60 - 60)/3 * 2 + 60 + 60, ...
+							(fw - DX - SETTINGS_WIDTH - DX - 40 - (fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 - DX - 40 - DX*2 - 10) / 2, ...  
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+						];
             obj.RRrg_axes = axes( ...
-                            tab_ellipse, ...
+                            tab_scatter, ...
                             'Units', 'pixels',...
                             'Position', obj.RRrg_axes_get_pos(fw, fh));
             title('Участок ритмограммы ЭКГ');
             xlabel('Время, с');
             ylabel('Длительность, с');
-
+            
+            % SS
+            
             obj.SSScatter_settings_get_pos = @(fw, fh) [ ...
-                            DX, ...
-                            DY + (fh - DY*3) / 2 * 0, ...
-                            SETTINGS_WIDTH-30, ...
-                            (fh - DY*3) / 2 ...
-                    ];
+							DX, ...            
+							DY*2 + (fh - DY*4 - DY_UP - 15 - 60 - 60)/3 * 1 + 60, ...
+							SETTINGS_WIDTH,...  
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+						];
             obj.SSScatter_settings = uipanel( ...
-                    tab_ellipse, ...
+                    tab_scatter, ...
                     'Units','pixels',...
                     'Position', obj.SSScatter_settings_get_pos(fw, fh), ...
                     'BackGroundColor',[0.93 0.93 0.93]);
@@ -180,7 +204,7 @@ classdef Viewer < handle
             obj.text_max_diff_SS = uicontrol(bg, ...
                     'Enable', 'off', ...
                     'Style', 'text',...
-                    'String', 'Максимальная разница интервалов, %', ...
+                    'String', 'Порядок медианного фильтра', ...
                     'Units', 'normalized', ...
                     'Position', [0, 0, 1, 0.5],...
                     'HandleVisibility', 'on');
@@ -188,162 +212,421 @@ classdef Viewer < handle
                     'Enable', 'off', ...
                     'Value', 0, ...
                     'Style', 'edit',...
-                    'String', sprintf('%.1f', obj.SS_max_diff),...
+                    'String', sprintf('%i', obj.SS_max_diff),...
                     'Units', 'normalized', ...
                     'Position', [0, 0.5, 1, 0.5],...
                     'HandleVisibility', 'off');
 
             obj.SSscatter_get_pos = @(fw, fh) [ ...
-                            DX + SETTINGS_WIDTH + DX,	...
-                            DY, ...
-                            (fh - DY*3) / 2, ... %(fw - DX*5)/4, ...
-                            (fh - DY*3) / 2 ...
-                    ];
+							DX + SETTINGS_WIDTH + DX + 40,	...
+							DY*2 + (fh - DY*4 - DY_UP - 15 - 60 - 60)/3 * 1 + 60, ...
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+						];
             obj.SSscatter = axes( ...
-                            tab_ellipse, ...
+                            tab_scatter, ...
                             'Units', 'pixels',...
                             'Position', obj.SSscatter_get_pos(fw, fh), ...
                             'DataAspectRatio', [1, 1, 1]);
-            title('Скаттерограмма ритмограммы АД');
+            title(["Cкатерограмма значений поударного", "систалического давления"]);
             xlabel('SS_i, с');
             ylabel('SS_{i-1}, с');
-
-            % rg
+						
             obj.SSrg_axes_get_pos = @(fw, fh) [ ...
-                            DX + SETTINGS_WIDTH + DX + (fh - DY*3)/2 + DX, ...
-                            DY + (fh - DY*3)/2 * 0, ...
-                            (fw - DX - SETTINGS_WIDTH - DX - (fh - DY*3)/2 - DX - DX*2) / 2, ...
-                            (fh - DY*3) / 2 ...
-                    ];
+							DX + SETTINGS_WIDTH + DX + 40 + (fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 + DX + 40,	...
+							DY*2 + (fh - DY*4 - DY_UP - 15 - 60 - 60)/3 * 1 - 15 + 60, ...
+							(fw - DX - SETTINGS_WIDTH - DX - 40 - (fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 - DX - 40 - DX*2 - 10) / 2, ...
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+						];
             obj.SSrg_axes = axes( ...
-                            tab_ellipse, ...
+                            tab_scatter, ...
                             'Units', 'pixels',...
                             'Position', obj.SSrg_axes_get_pos(fw, fh));
             title('Участок интервалов "систола-систола" АД');
             xlabel('Время, с');
             ylabel('Давление, мм.рт.ст');
+			
+            % DD
+            
+            obj.DDScatter_settings_get_pos = @(fw, fh) [ ...
+							DX, ...            
+							DY*1 + (fh - DY*4 - DY_UP - 15 - 60 - 60)/3 * 0, ...
+							SETTINGS_WIDTH,...  
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+						];
+            obj.DDScatter_settings = uipanel( ...
+                    tab_scatter, ...
+                    'Units','pixels',...
+                    'Position', obj.DDScatter_settings_get_pos(fw, fh), ...
+                    'BackGroundColor',[0.93 0.93 0.93]);
 
+            bg = uibuttongroup(obj.DDScatter_settings, ...
+                    'Units', 'normalized', ...
+                    'Position', [0.05, 0.05, 0.9, 0.9]);
+            obj.text_max_diff_DD = uicontrol(bg, ...
+                    'Enable', 'off', ...
+                    'Style', 'text',...
+                    'String', 'Порядок медианного фильтра', ...
+                    'Units', 'normalized', ...
+                    'Position', [0, 0, 1, 0.5],...
+                    'HandleVisibility', 'on');
+            obj.edit_max_diff_DD = uicontrol(bg, ...
+                    'Enable', 'off', ...
+                    'Value', 0, ...
+                    'Style', 'edit',...
+                    'String', sprintf('%i', obj.DD_max_diff),...
+                    'Units', 'normalized', ...
+                    'Position', [0, 0.5, 1, 0.5],...
+                    'HandleVisibility', 'off');
+
+            obj.DDscatter_get_pos = @(fw, fh) [ ...
+							DX + SETTINGS_WIDTH + DX + 40,	...
+							DY*1 + (fh - DY*4 - DY_UP - 15 - 60 - 60)/3 * 0, ...
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+						];
+            obj.DDscatter = axes( ...
+                            tab_scatter, ...
+                            'Units', 'pixels',...
+                            'Position', obj.DDscatter_get_pos(fw, fh), ...
+                            'DataAspectRatio', [1, 1, 1]);
+            title(["Скатерограмма значений поударного", "диасталического давления"]);
+            xlabel('DD_i, с');
+            ylabel('DD_{i-1}, с');
+						
+            obj.DDrg_axes_get_pos = @(fw, fh) [ ...
+							DX + SETTINGS_WIDTH + DX + 40 + (fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 + DX + 40,	...
+							DY*1 + (fh - DY*4 - DY_UP - 15 - 60 - 60)/3 * 0, ...
+							(fw - DX - SETTINGS_WIDTH - DX - 40 - (fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 - DX - 40 - DX*2 - 10) / 2, ... 
+							(fh - DY*4 - DY_UP - 15 - 60 - 60) / 3 ...
+						];
+            obj.DDrg_axes = axes( ...
+                            tab_scatter, ...
+                            'Units', 'pixels',...
+                            'Position', obj.DDrg_axes_get_pos(fw, fh));
+            title('Участок интервалов "диаистола-диастола" АД');
+            xlabel('Время, с');
+            ylabel('Давление, мм.рт.ст');
+
+						% table
 
             obj.EllipseTable_get_pos = @(fw, fh) [ ...
-                            DX + SETTINGS_WIDTH + DX + (fh - DY*3)/2 + DX + ...
-                            (fw - DX - SETTINGS_WIDTH - DX - (fh - DY*3)/2 - DX - DX*2) / 2 + ...
-                            DX,	...
-                            DY, ...
-                            fw - (...
-                            DX + SETTINGS_WIDTH + DX + (fh - DY*3)/2 + DX + ...
-                            (fw - DX - SETTINGS_WIDTH - DX - (fh - DY*3)/2 - DX - DX*2) / 2 + ...
-                            DX) - DX, ...
-                            (fh - DY*2) / 1 ...
-                    ];
+							DX + SETTINGS_WIDTH + DX + 40 + (fh - DY*4 - DY_UP) / 3 + DX + 40 + (fw - DX - SETTINGS_WIDTH - DX - 40 - (fh - DY*4 - DY_UP) / 3 - DX - 40 - DX*2 - 10) / 2 + DX,	...
+							DY*1 + (fh - DY*4 - DY_UP)/3 * 0, ...
+							(fw - DX - SETTINGS_WIDTH - DX - 40 - (fh - DY*4 - DY_UP) / 3 - DX - 40 - DX*2 - 10) / 2, ... 
+							(fh - DY*2 - DY_UP - 15) ...
+						];
             obj.EllipseTable = uitable( ...
-                            tab_ellipse, ...
+                            tab_scatter, ...
                             'Units', 'pixels',...
                             'FontSize',  10, ...
                             'Position', obj.EllipseTable_get_pos(fw, fh));
             obj.EllipseTable.ColumnEditable = false;
             obj.EllipseTable.ColumnName = { 'Величина', 'ЭКГ', 'АД' };
-            Data = cell(8, 3);
+            Data = cell(8, 4);
             Data{1, 1} = 'Длина облака, мс';
             Data{2, 1} = 'Ширина облака, мс';
             Data{3, 1} = 'Площадь облака, мс^2';
             Data{4, 1} = 'Мср, мс';
-            Data{5, 1} = 'RR(SS)_min, мс';
-            Data{6, 1} = 'RR(SS)_max, мс';
+            Data{5, 1} = 'RR(SS)_{min}, мс';
+            Data{6, 1} = 'RR(SS)_{max}, мс';
             Data{7, 1} = 'Размах RR(SS), мс';
             Data{8, 1} = 'Mo, мс';
             obj.EllipseTable.Data = Data;
-            obj.EllipseTable.ColumnWidth = 'fit';
+            obj.EllipseTable.ColumnWidth = 'auto';
 
             %--------------------------- 'Спектры' tab --------------------------
 
-            tab_psd = uitab(obj.tg);
-            tab_psd.Title = 'Спектры';
-
+            tab_spec = uitab(obj.tg);
+            tab_spec.Title = 'Спектры';
+            
+            DX = 40;
+            DY = 60;
+            
+						% RR
+						
             obj.RRpsd_axes_get_pos = @(fw, fh) [ ...
                             DX,	...
-                            DY*3 + (fh - DY*4)/3 * 2, ...
+                            DY*4 + (fh - DY*5)/4 * 3, ...
                             (fw - DX*3) / 2, ...
-                            (fh - DY*4) / 3 ...
+                            (fh - DY*5) / 4 ...
                     ];
             obj.RRpsd_axes = axes( ...
-                            tab_psd, ...
+                            tab_spec, ...
                             'Units', 'pixels',...
                             'Position', obj.RRpsd_axes_get_pos(fw, fh));
             title('Ритмограмма участка');
             xlabel('Частота, Гц');
             ylabel('Оценка СПМ, мс^2/Гц');
+						
+            obj.PSDTableRR_get_pos = @(fw, fh) [ ...
+                            DX + (fw - DX*3)/2 + DX,	...
+                            DY*4 + (fh - DY*5)/4 * 3, ...
+                            (fw - DX*3) / 2, ...
+                            (fh - DY*5) / 4 ...
+                    ];
+            obj.PSDTableRR = uitable( ...
+                            tab_spec, ...
+                            'Units', 'pixels',...
+                            'FontSize',  10, ...
+                            'Position', obj.PSDTableRR_get_pos(fw, fh));
+            obj.PSDTableRR.ColumnEditable = false;
+            obj.PSDTableRR.ColumnName = { 'Величина', 'Значение для R-R интервалов, мс^2' };
+            Data = cell(3, 2);
+            Data{1, 1} = 'VLF (0,003..0,04 Гц), мс^2';
+            Data{2, 1} = 'LF (0,04..0,15 Гц), мс^2';
+            Data{3, 1} = 'HF (0,15..0,4 Гц), мс^2';
+            obj.PSDTableRR.Data = Data;
+            obj.PSDTableRR.ColumnWidth = { 200, 320 };
+            
+						% SS
 
             obj.SSpsd_axes_get_pos = @(fw, fh) [ ...
                             DX,	...
-                            DY*2 + (fh - DY*4)/3 * 1, ...
+                            DY*3 + (fh - DY*5) / 4 * 2, ...
                             (fw - DX*3) / 2, ...
-                            (fh - DY*4) / 3 ...
+                            (fh - DY*5) / 4 ...
                     ];
             obj.SSpsd_axes = axes( ...
-                            tab_psd, ...
+                            tab_spec, ...
                             'Units', 'pixels',...
                             'Position', obj.SSpsd_axes_get_pos(fw, fh));
             title('Спектр Уэлча интервалов "систола-систола" АД');
             xlabel('Частота, Гц');
             ylabel('Оценка СПМ, мм.рт.ст.^2/Гц');
 
+            obj.PSDTableSS_get_pos = @(fw, fh) [ ...
+                            DX + (fw - DX*3)/2 + DX,	...
+                            DY*3 + (fh - DY*5) / 4 * 2, ...
+                            (fw - DX*3) / 2, ...
+                            (fh - DY*5) / 4 ...
+                    ];
+            obj.PSDTableSS = uitable( ...
+                            tab_spec, ...
+                            'Units', 'pixels',...
+                            'FontSize',  10, ...
+                            'Position', obj.PSDTableSS_get_pos(fw, fh));
+            obj.PSDTableSS.ColumnEditable = false;
+            obj.PSDTableSS.ColumnName = { 'Величина', 'Значение для систолического АД, (мм.рт.ст.)^2/Гц' };
+            Data = cell(3, 2);
+            Data{1, 1} = 'VLF (0,003..0,04 Гц), мс^2';
+            Data{2, 1} = 'LF (0,04..0,15 Гц), мс^2';
+            Data{3, 1} = 'HF (0,15..0,4 Гц), мс^2';
+            obj.PSDTableSS.Data = Data;
+            obj.PSDTableSS.ColumnWidth = { 200, 320 };
+            
+						% DD
+
+            obj.DDpsd_axes_get_pos = @(fw, fh) [ ...
+                            DX,	...
+                            DY*2 + (fh - DY*5) / 4 * 1, ...
+                            (fw - DX*3) / 2, ...
+                            (fh - DY*5) / 4 ...
+                    ];
+            obj.DDpsd_axes = axes( ...
+                            tab_spec, ...
+                            'Units', 'pixels',...
+                            'Position', obj.DDpsd_axes_get_pos(fw, fh));
+            title('Спектр Уэлча интервалов "диаистола-диаистола" АД');
+            xlabel('Частота, Гц');
+            ylabel('Оценка СПМ, мм.рт.ст.^2/Гц');
+
+            obj.PSDTableDD_get_pos = @(fw, fh) [ ...
+                            DX + (fw - DX*3)/2 + DX,	...
+                            DY*2 + (fh - DY*5) / 4 * 1, ...
+                            (fw - DX*3) / 2, ...
+                            (fh - DY*5) / 4 ...
+                    ];
+            obj.PSDTableDD = uitable( ...
+                            tab_spec, ...
+                            'Units', 'pixels',...
+                            'FontSize',  10, ...
+                            'Position', obj.PSDTableDD_get_pos(fw, fh));
+            obj.PSDTableDD.ColumnEditable = false;
+            obj.PSDTableDD.ColumnName = { 'Величина', 'Значение для диастолического АД, (мм.рт.ст.)^2/Гц' };
+            Data = cell(3, 2);
+            Data{1, 1} = 'VLF (0,003..0,04 Гц), мс^2';
+            Data{2, 1} = 'LF (0,04..0,15 Гц), мс^2';
+            Data{3, 1} = 'HF (0,15..0,4 Гц), мс^2';
+            obj.PSDTableDD.Data = Data;
+            obj.PSDTableDD.ColumnWidth = { 200, 320 };
+						
+
             obj.CPSD_axes_get_pos = @(fw, fh) [ ...
                             DX,	...
-                            DY*1 + (fh - DY*4)/3 * 0, ....
+                            DY*1 + (fh - DY*5) / 4 * 0, ....
                             (fw - DX*3) / 2, ...
-                            (fh - DY*4) / 3 ...
+                            (fh - DY*5) / 4 ...
                     ];
             obj.CPSD_axes = axes( ...
-                            tab_psd, ...
+                            tab_spec, ...
                             'Units', 'pixels',...
                             'Position', obj.CPSD_axes_get_pos(fw, fh));
             title('Кросс-СПМ интервалов "систола-систола" АД и ритмограммы ЭКГ');
             xlabel('Частота, Гц');
             ylabel('Оценка');
 
+            %--------------------------- 'Таблица показателей' tab --------------------------
 
-            obj.PSDTable_get_pos = @(fw, fh) [ ...
-                            DX*2 + (fw - DX*3) / 2,	...
-                            DY*1 + (fh - DY*4)/3 * 0, ....
-                            (fw - DX*3) / 2, ...
-                            fh - DY*2 ...
+            tab_tabl = uitab(obj.tg);
+            tab_tabl.Title = 'Таблица показателей';
+						
+            DX = 10;
+            DY = 10;
+            
+            %IndicatorsTable RR
+						
+            obj.IndicatorsTableRR_get_pos = @(fw, fh) [ ...
+                            DX*1 + (fw - DX*2) / 2 * 0, ...
+                            DY*3 + (fh - DY*8 - 30)/3 * 2 + 30, ....
+                            (fw - DX*3) / 1, ...
+                            (fh - DY*8 - 30) / 3, ...
                     ];
-            obj.PSDTable = uitable( ...
-                            tab_psd, ...
+            obj.IndicatorsTableRR = uitable( ...
+                            tab_tabl, ...
                             'Units', 'pixels',...
                             'FontSize',  10, ...
-                            'Position', obj.PSDTable_get_pos(fw, fh));
-            obj.PSDTable.ColumnEditable = false;
-            obj.PSDTable.ColumnName = { 'Величина', 'ЭКГ', 'АД' };
-            Data = cell(3, 3);
-            Data{1, 1} = 'VLF (0,003..0,04 Гц), мс^2';
-            Data{2, 1} = 'LF (0,04..0,15 Гц), мс^2';
-            Data{3, 1} = 'HF (0,15..0,4 Гц), мс^2';
-            obj.PSDTable.Data = Data;
-            obj.PSDTable.ColumnWidth = 'fit';
-
+                            'Position', obj.IndicatorsTableRR_get_pos(fw, fh));
+            obj.IndicatorsTableRR.ColumnEditable = false;
+            obj.IndicatorsTableRR.RowName = { '', '', '', '', '' };
+            obj.IndicatorsTableRR.ColumnName = { ...
+							'№ этапа', ...
+							'Ширина облака, мс', ...
+							'Длина облака, мс', ...
+							'Mo, мс', ...
+							'Размах RR, мс', ...
+							'RR мин, мс', ...
+							'RR макс, мс', ...
+							'Площадь облака, мс^2', ...
+							'Мср, мс', ...
+							'VLF, мс^2', ...
+							'LF, мс^2', ...
+							'HF, мс^2', ...
+						};
+            Data = cell(5, 11);
+            Data{1, 1} = '1';
+            Data{2, 1} = '2';
+            Data{3, 1} = '3';
+            Data{4, 1} = '4';
+            Data{5, 1} = '5';
+            obj.IndicatorsTableRR.Data = Data;
+            obj.IndicatorsTableRR.ColumnWidth = 'fit';
+            
+            %IndicatorsTable SS
+						
+            obj.IndicatorsTableSS_get_pos = @(fw, fh) [ ...
+                            DX*1 + (fw - DX*2) / 2 * 0, ...
+                            DY*2 + (fh - DY*8 - 30)/3 * 1 + 30, ....
+                            (fw - DX*3) / 1, ...
+                            (fh - DY*8 - 30) / 3, ...
+                    ];
+            obj.IndicatorsTableSS = uitable( ...
+                            tab_tabl, ...
+                            'Units', 'pixels',...
+                            'FontSize',  10, ...
+                            'Position', obj.IndicatorsTableSS_get_pos(fw, fh));
+            obj.IndicatorsTableSS.ColumnEditable = false;
+            obj.IndicatorsTableSS.RowName = { '', '', '', '', '', '' };
+            obj.IndicatorsTableSS.ColumnName = { ...
+							'№ этапа', ...
+							'Ширина облака, мм рт. ст.', ...
+							'Длина облака, мм рт. ст.', ...
+							'Mo, мм рт. ст.', ...
+							'Размах SS, мм рт. ст.', ...
+							'SS мин, мм рт. ст.', ...
+							'SS макс, мм рт. ст.', ...
+							'Площадь облака, (мм рт. ст.)^2', ...
+							'Мср, мм рт. ст.', ...
+							'VLF, (мм рт. ст.)^2', ...
+							'LF, (мм рт. ст.)^2', ...
+							'HF, (мм рт. ст.)^2', ...
+						};
+            Data = cell(5, 11);
+            Data{1, 1} = '1';
+            Data{2, 1} = '2';
+            Data{3, 1} = '3';
+            Data{4, 1} = '4';
+            Data{5, 1} = '5';
+            obj.IndicatorsTableSS.Data = Data;
+            obj.IndicatorsTableSS.ColumnWidth = 'fit';
+            
+            %IndicatorsTable DD
+						
+            obj.IndicatorsTableDD_get_pos = @(fw, fh) [ ...
+                            DX*1 + (fw - DX*2) / 2 * 0, ...
+                            DY*1 + (fh - DY*8 - 30)/3 * 0 + 30, ....
+                            (fw - DX*3) / 1, ...
+                            (fh - DY*8 - 30) / 3, ...
+                    ];
+            obj.IndicatorsTableDD = uitable( ...
+                            tab_tabl, ...
+                            'Units', 'pixels',...
+                            'FontSize',  10, ...
+                            'Position', obj.IndicatorsTableDD_get_pos(fw, fh));
+            obj.IndicatorsTableDD.ColumnEditable = false;
+            obj.IndicatorsTableDD.RowName = { '', '', '', '', '', '' };
+            obj.IndicatorsTableDD.ColumnName = { ...
+							'№ этапа', ...
+							'Ширина облака, мм рт. ст.', ...
+							'Длина облака, мм рт. ст.', ...
+							'Mo, мм рт. ст.', ...
+							'DD, мм рт. ст.', ...
+							'DD мин, мм рт. ст.', ...
+							'DD макс, мм рт. ст.', ...
+							'Площадь облака, (мм рт. ст.)^2', ...
+							'Мср, мм рт. ст.', ...
+							'VLF, (мм рт. ст.)^2', ...
+							'LF, (мм рт. ст.)^2', ...
+							'HF, (мм рт. ст.)^2', ...
+						};
+            Data = cell(5, 11);
+            Data{1, 1} = '1';
+            Data{2, 1} = '2';
+            Data{3, 1} = '3';
+            Data{4, 1} = '4';
+            Data{5, 1} = '5';
+            obj.IndicatorsTableDD.Data = Data;
+            obj.IndicatorsTableDD.ColumnWidth = 'fit';
+						
+						obj.ExportBtn_get_pos = @(fw, fh) [ ...
+                            fw - 250 - DX*2, ...
+                            DY*1 + (fh - DY*8)/3 * 0, ....
+                            250, ...
+                            25, ...
+                    ];						
+						obj.ExportBtn = uicontrol( ...
+							tab_tabl, ...
+							'Units', 'pixels', ...
+							'Style', 'pushbutton', ...
+							'String', 'Экспортировать в xlsx', ...
+              'Position', obj.ExportBtn_get_pos(fw, fh));
+							
+            
             %--------------------------- 'Графики' tab --------------------------
 
             tab_plots = uitab(obj.tg);
             tab_plots.Title = 'Графики';
 
-                DX = 40; DY = 60;
+                DX = 100; DY = 80;
                 
                 % Длина
                 obj.Ellipses_plots_len_get_pos = @(fw, fh) [ ...
-                            DX*1 + (fw - DX*5) / 4 * 0,	...
-                            fh - DY*1 - (fh - DY*4)/3 * 1, ....
-                            (fw - DX*5) / 4, ...
-                            (fh - DY*4) / 3 ...
+                            DX*1 + (fw - DX*5) / 4 * 0,	... % Х у ни;него левого угла
+                            fh - DY*1 - (fh - DY*4)/3 * 1, .... % У у ни;него левого угла
+                            (fw - DX*5) / 4, ... % Ширна
+                            (fh - DY*4) / 3 ... % Высота
                 ];
 
                 obj.Ellipses_plots_len = axes( ...
                     tab_plots, ...
                     'Units', 'pixels',...
                     'Position', obj.Ellipses_plots_len_get_pos(fw, fh));
-                title('Характеристики спектров');
-                xlabel('Частота, Гц dsfsdf');
-                ylabel('Оценка');
+                
+                obj.Ellipses_plots_len.XTick = [1 2 3 4 5];
+                
+                title('Длина эллипса скатерограммы ЭКГ');
+                xlabel('Номер этапа нагрузки');
+                ylabel('Длина, мс');
 
                 % Ширина
                 obj.Ellipses_plots_wid_get_pos = @(fw, fh) [ ...
@@ -357,9 +640,10 @@ classdef Viewer < handle
                     tab_plots, ...
                     'Units', 'pixels',...
                     'Position', obj.Ellipses_plots_wid_get_pos(fw, fh));
-                title('Характеристики спектров');
-                xlabel('Частота, Гц');
-                ylabel('Оценка');
+                obj.Ellipses_plots_wid.XTick = [1 2 3 4 5];
+                title('Ширина эллипса скатерограммы ЭКГ');
+                xlabel('Номер этапа нагрузки');
+                ylabel('Ширина, мс');
 
                 % Площадь
                 obj.Ellipses_plots_sq_get_pos = @(fw, fh) [ ...
@@ -373,9 +657,10 @@ classdef Viewer < handle
                     tab_plots, ...
                     'Units', 'pixels',...
                     'Position', obj.Ellipses_plots_sq_get_pos(fw, fh));
-                title('Характеристики спектров');
-                xlabel('Частота, Гц');
-                ylabel('Оценка');
+                obj.Ellipses_plots_sq.XTick = [1 2 3 4 5];
+                title('Площадь облака ЭКГ');
+                xlabel('Номер этапа нагрузки');
+                ylabel('Площадь, мс^2');
 
                 % Мср
                 obj.Ellipses_plots_Mcp_get_pos = @(fw, fh) [ ...
@@ -389,9 +674,11 @@ classdef Viewer < handle
                     tab_plots, ...
                     'Units', 'pixels',...
                     'Position', obj.Ellipses_plots_Mcp_get_pos(fw, fh));
-                title('Характеристики спектров');
-                xlabel('Частота, Гц');
-                ylabel('Оценка');
+                
+                obj.Ellipses_plots_Mcp.XTick = [1 2 3 4 5];
+                title('Mcp');
+                xlabel('Номер этапа нагрузки');
+                ylabel('Mcp, мс');
 
                 % Мин
                 obj.Ellipses_plots_min_get_pos = @(fw, fh) [ ...
@@ -405,9 +692,11 @@ classdef Viewer < handle
                     tab_plots, ...
                     'Units', 'pixels',...
                     'Position', obj.Ellipses_plots_min_get_pos(fw, fh));
-                title('Характеристики спектров');
-                xlabel('Частота, Гц');
-                ylabel('Оценка');
+                
+                obj.Ellipses_plots_min.XTick = [1 2 3 4 5];
+                title('Минимальные значения R-R интервалов');
+                xlabel('Номер этапа нагрузки');
+                ylabel('RR_{min} мс');
 
                 % Макс
                 obj.Ellipses_plots_max_get_pos = @(fw, fh) [ ...
@@ -421,9 +710,11 @@ classdef Viewer < handle
                     tab_plots, ...
                     'Units', 'pixels',...
                     'Position', obj.Ellipses_plots_max_get_pos(fw, fh));
-                title('Характеристики спектров');
-                xlabel('Частота, Гц');
-                ylabel('Оценка');
+                
+                obj.Ellipses_plots_max.XTick = [1 2 3 4 5];
+                title('Максимальные значения R-R интервалов');
+                xlabel('Номер этапа нагрузки');
+                ylabel('RR_{max}, мс');
 
                 % Размах
                 obj.Ellipses_plots_range_get_pos = @(fw, fh) [ ...
@@ -437,9 +728,11 @@ classdef Viewer < handle
                     tab_plots, ...
                     'Units', 'pixels',...
                     'Position', obj.Ellipses_plots_range_get_pos(fw, fh));
-                title('Размах');
-                xlabel('Частота, Гц');
-                ylabel('Оценка');
+                
+                obj.Ellipses_plots_range.XTick = [1 2 3 4 5];
+                title('Размах R-R интервалов');
+                xlabel('Номер этапа нагрузки');
+                ylabel('Размах, мс');
 
                 % Мода
                 obj.Ellipses_plots_Mo_get_pos = @(fw, fh) [ ...
@@ -449,59 +742,70 @@ classdef Viewer < handle
                             (fh - DY*4) / 3 ...
                 ];
 
-                % Характеристики спектров
+                
                 obj.Ellipses_plots_Mo = axes( ...
                     tab_plots, ...
                     'Units', 'pixels',...
                     'Position', obj.Ellipses_plots_Mo_get_pos(fw, fh));
+                
+                obj.Ellipses_plots_Mo.XTick = [1 2 3 4 5];
                 title('Мода');
-                xlabel('Частота, Гц');
-                ylabel('Оценка');
+                xlabel('Номер этапа нагрузки');
+                ylabel('Mo ЭКГ, мс');
+                
+                
+                % Характеристики спектров
                 
                 % VLF
                 obj.PSD_axes_get_pos_VLF = @(fw, fh) [ ...
                             DX*1 + (fw - DX*5) / 4 * 0,	...
                             fh - DY*3 - (fh - DY*4)/3 * 3, ....
-                            (fw - DX*5) / 4, ...
+                            (fw - DX*4) / 3, ...
                             (fh - DY*4) / 3 ...
                 ];
                 obj.PSD_axes_VLF = axes( ...
                                 tab_plots, ...
                                 'Units', 'pixels',...
                                 'Position', obj.PSD_axes_get_pos_VLF(fw, fh));
+                            
+                obj.PSD_axes_VLF.XTick = [1 2 3 4 5];
                 title('VLF');
-                xlabel('Частота, Гц');
-                ylabel('Оценка');
+                xlabel('Номер этапа нагрузки');
+                ylabel('Значение мощности, мс^2/Гц');
 
                 % LF
                 obj.PSD_axes_get_pos_LF = @(fw, fh) [ ...
-                            DX*2 + (fw - DX*5) / 4 * 1,	...
+                            DX*2 + (fw - DX*4) / 3 * 1,	...
                             fh - DY*3 - (fh - DY*4)/3 * 3, ....
-                            (fw - DX*5) / 4, ...
+                            (fw - DX*4) / 3, ...
                             (fh - DY*4) / 3 ...
                 ];
                 obj.PSD_axes_LF = axes( ...
                                 tab_plots, ...
                                 'Units', 'pixels',...
                                 'Position', obj.PSD_axes_get_pos_LF(fw, fh));
+                            
+                obj.PSD_axes_LF.XTick = [1 2 3 4 5];            
                 title('LF');
-                xlabel('Частота, Гц');
-                ylabel('Оценка');
+                xlabel('Номер этапа нагрузки');
+                ylabel('Значение мощности, мс^2/Гц');
 
                 % HF
                 obj.PSD_axes_get_pos_HF = @(fw, fh) [ ...
-                            DX*3 + (fw - DX*5) / 4 * 2,	...
+                            DX*3 + (fw - DX*4) / 3 * 2,	...
                             fh - DY*3 - (fh - DY*4)/3 * 3, ....
-                            (fw - DX*5) / 4, ...
+                            (fw - DX*4) / 3,  ...
                             (fh - DY*4) / 3 ...
                 ];
                 obj.PSD_axes_HF = axes( ...
                                 tab_plots, ...
                                 'Units', 'pixels',...
                                 'Position', obj.PSD_axes_get_pos_HF(fw, fh));
+                            
+                obj.PSD_axes_HF.XTick = [1 2 3 4 5];
                 title('HF');
-                xlabel('Частота, Гц');
-                ylabel('Оценка');
+                xlabel('Номер этапа нагрузки');
+                ylabel('Значение мощности, мс^2/Гц');
 
             
             obj.PSD_axes_legend = [];
@@ -528,6 +832,17 @@ classdef Viewer < handle
 						obj.h_SS_a = -1;
 						obj.h_SS_b = -1;
 						obj.h_SS_ellipse = -1;
+                        
+                        %------------------------- DD scatter ellipse ---------------------------
+
+						axes(obj.DDscatter); hold on; grid on;
+						obj.drag_point_DD_a = DragPoint(obj.DDscatter, obj.f);
+						obj.drag_point_DD_b = DragPoint(obj.DDscatter, obj.f);
+						obj.drag_point_DD_center = DragPoint(obj.DDscatter, obj.f);
+
+						obj.h_DD_a = -1;
+						obj.h_DD_b = -1;
+						obj.h_DD_ellipse = -1;
 
 						%------------------------- Callbacks ---------------------------
 
@@ -538,9 +853,17 @@ classdef Viewer < handle
 						obj.f.WindowButtonMotionFcn = @(s, e) on_f2_mouse_moution(obj);
 						obj.f.WindowButtonDownFcn = @(s, e) on_f2_mouse_down(obj);
 						obj.f.WindowButtonUpFcn = @(s, e) on_f2_mouse_up(obj);
+                        
+						obj.f.WindowButtonMotionFcn = @(s, e) on_f2_mouse_moution(obj);
+						obj.f.WindowButtonDownFcn = @(s, e) on_f2_mouse_down(obj);
+						obj.f.WindowButtonUpFcn = @(s, e) on_f2_mouse_up(obj);
             
-						obj.edit_max_diff_SS.Callback = @(s, e) change_intervals_max_diff(obj, s, 'SS');
 						obj.edit_max_diff_RR.Callback = @(s, e) change_intervals_max_diff(obj, s, 'RR');
+						obj.edit_max_diff_SS.Callback = @(s, e) change_intervals_max_diff(obj, s, 'SS');
+						obj.edit_max_diff_DD.Callback = @(s, e) change_intervals_max_diff(obj, s, 'DD');
+						
+						obj.ExportBtn.Callback = @(s, e) on_export_btn_click(obj);
+						
             obj.f.SizeChangedFcn = @(s, e) on_main_figure_size_changed(obj);
         end
     end
@@ -625,6 +948,14 @@ classdef Viewer < handle
 					obj.drag_point_SS_a = obj.drag_point_SS_a.UpdateOldPos();
 					obj.drag_point_SS_b = obj.drag_point_SS_b.UpdateOldPos();
 					obj.drag_point_SS_center = obj.drag_point_SS_center.UpdateOldPos();
+					
+					obj.drag_point_DD_a = obj.drag_point_DD_a.OnMouseMove();
+					obj.drag_point_DD_b = obj.drag_point_DD_b.OnMouseMove();
+					obj.drag_point_DD_center = obj.drag_point_DD_center.OnMouseMove();
+					obj.on_point_drag_DD();
+					obj.drag_point_DD_a = obj.drag_point_DD_a.UpdateOldPos();
+					obj.drag_point_DD_b = obj.drag_point_DD_b.UpdateOldPos();
+					obj.drag_point_DD_center = obj.drag_point_DD_center.UpdateOldPos();
 			end
 
 			function on_f2_mouse_down(obj)					
@@ -646,6 +977,16 @@ classdef Viewer < handle
 					
 					obj.drag_point_SS_center = obj.drag_point_SS_center.OnMouseDown();
 					if obj.drag_point_SS_center.IsDragged(), return; end
+					
+					
+					obj.drag_point_DD_a = obj.drag_point_DD_a.OnMouseDown();
+					if obj.drag_point_DD_a.IsDragged(), return; end
+					
+					obj.drag_point_DD_b = obj.drag_point_DD_b.OnMouseDown();
+					if obj.drag_point_DD_b.IsDragged(), return; end
+					
+					obj.drag_point_DD_center = obj.drag_point_DD_center.OnMouseDown();
+					if obj.drag_point_DD_center.IsDragged(), return; end
 			end
 
 			function on_f2_mouse_up(obj)
@@ -656,6 +997,10 @@ classdef Viewer < handle
 					obj.drag_point_SS_a = obj.drag_point_SS_a.OnMouseUp();
 					obj.drag_point_SS_b = obj.drag_point_SS_b.OnMouseUp();
 					obj.drag_point_SS_center = obj.drag_point_SS_center.OnMouseUp();
+					
+					obj.drag_point_DD_a = obj.drag_point_DD_a.OnMouseUp();
+					obj.drag_point_DD_b = obj.drag_point_DD_b.OnMouseUp();
+					obj.drag_point_DD_center = obj.drag_point_DD_center.OnMouseUp();
 			end
 
 			function on_point_drag_RR(obj)					
@@ -833,6 +1178,91 @@ classdef Viewer < handle
 					
 					obj.EllipseTable.Data(1 : 3, 2 : end) = Data;
 			end
+			
+			function on_point_drag_DD(obj)					
+					if ~ishandle(obj.h_DD_a) || ~ishandle(obj.h_DD_b) || ~ishandle(obj.h_DD_ellipse)
+							return
+					end
+					
+					if obj.drag_point_DD_a.IsDragged()
+							d = (obj.drag_point_DD_a.X + obj.drag_point_DD_a.Y) / 2;
+							obj.drag_point_DD_a = obj.drag_point_DD_a.SetPos(d, d);
+							
+							pa = [obj.drag_point_DD_a.X; obj.drag_point_DD_a.Y];
+							pc = [obj.drag_point_DD_center.X; obj.drag_point_DD_center.Y];
+							a_pts = [pa, pc + (pc - pa)];  
+							obj.h_DD_a.XData = a_pts(1, :);
+							obj.h_DD_a.YData = a_pts(2, :);
+					elseif obj.drag_point_DD_b.IsDragged()
+							db_len = [-1 / sqrt(2); 1 / sqrt(2)]' * [obj.drag_point_DD_b.X; obj.drag_point_DD_b.Y];
+							db_x_y = sqrt(db_len^2 / 2);
+							db = [-db_x_y; db_x_y];
+							
+							pc = [obj.drag_point_DD_center.X; obj.drag_point_DD_center.Y];
+							pb = pc + db;
+							obj.drag_point_DD_b = obj.drag_point_DD_b.SetPos(pb(1), pb(2));
+							
+							b_pts = [pb, pc + (pc - pb)]; 
+							obj.h_DD_b.XData = b_pts(1, :);
+							obj.h_DD_b.YData = b_pts(2, :);
+					elseif obj.drag_point_DD_center.IsDragged()
+							pc = [obj.drag_point_DD_center.X; obj.drag_point_DD_center.Y];
+							
+							dc_len = [1 / sqrt(2); 1 / sqrt(2)]' * pc;
+							dc_x_y = sqrt(dc_len^2 / 2);
+							pc_next = [dc_x_y; dc_x_y];
+							
+							delta_pc = pc_next - [obj.drag_point_DD_center.OldX; obj.drag_point_DD_center.OldY];
+							
+							obj.drag_point_DD_a = obj.drag_point_DD_a.SetPos( ...
+									obj.drag_point_DD_a.OldX + delta_pc(1), ...
+									obj.drag_point_DD_a.OldY + delta_pc(2));
+							obj.drag_point_DD_b = obj.drag_point_DD_b.SetPos( ...
+									obj.drag_point_DD_b.OldX + delta_pc(1), ...
+									obj.drag_point_DD_b.OldY + delta_pc(2));
+							obj.drag_point_DD_center = obj.drag_point_DD_center.SetPos(pc_next(1), pc_next(2));
+							
+							obj.h_DD_a.XData = obj.h_DD_a.XData + delta_pc(1);
+							obj.h_DD_a.YData = obj.h_DD_a.YData + delta_pc(2);
+							
+							obj.h_DD_b.XData = obj.h_DD_b.XData + delta_pc(1);
+							obj.h_DD_b.YData = obj.h_DD_b.YData + delta_pc(2);
+							
+							obj.drag_point_DD_a = obj.drag_point_DD_a.MoveToPos();
+							obj.drag_point_DD_b = obj.drag_point_DD_b.MoveToPos();
+					else
+							return;
+					end
+					
+					pa = [obj.drag_point_DD_a.X; obj.drag_point_DD_a.Y];
+					pb = [obj.drag_point_DD_b.X; obj.drag_point_DD_b.Y];
+					pc = [obj.drag_point_DD_center.X; obj.drag_point_DD_center.Y];
+					
+					a = sqrt(sum((pa - pc) .^ 2));
+					b = sqrt(sum((pb - pc) .^ 2));
+					
+					el_x = linspace(-a, a, 1000);
+					el_y = b .* (1 - (el_x ./ a) .^ 2) .^ 0.5;
+					
+					el_x = [el_x, flip(el_x)];
+					el_y = [el_y, -flip(el_y)];
+					
+					theta = 45;
+					R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
+					
+					el_pts = [el_x; el_y];
+					el_pts = R * el_pts + pc;
+					obj.h_DD_ellipse.XData = el_pts(1, :);
+					obj.h_DD_ellipse.YData = el_pts(2, :);
+					
+					Data = obj.EllipseTable.Data(1 : 3, 2 : end);
+					
+					Data{1,3} = 1000 * a * 2; % ell_len
+					Data{2,3} = 1000 * b * 2; % ell_wid
+					Data{3,3} = 1000 * 1000 * pi * a * b; % square
+					
+					obj.EllipseTable.Data(1 : 3, 2 : end) = Data;
+			end
 
 			function on_main_figure_size_changed(obj)
 				fw = obj.f.Position(3);
@@ -856,21 +1286,34 @@ classdef Viewer < handle
 				obj.SSscatter.Position = obj.SSscatter_get_pos(fw, fh);
 				obj.SSpsd_axes.Position = obj.SSpsd_axes_get_pos(fw, fh);
 				
+				obj.DDrg_axes.Position = obj.DDrg_axes_get_pos(fw, fh);
+				obj.DDScatter_settings.Position = obj.DDScatter_settings_get_pos(fw, fh);
+				obj.DDscatter.Position = obj.DDscatter_get_pos(fw, fh);
+				obj.DDpsd_axes.Position = obj.DDpsd_axes_get_pos(fw, fh);
+				
 				obj.EllipseTable.Position = obj.EllipseTable_get_pos(fw, fh);
 				obj.CPSD_axes.Position = obj.CPSD_axes_get_pos(fw, fh);
-				obj.PSDTable.Position = obj.PSDTable_get_pos(fw, fh);
+				obj.PSDTableRR.Position = obj.PSDTableRR_get_pos(fw, fh);
+				obj.PSDTableSS.Position = obj.PSDTableSS_get_pos(fw, fh);
+				obj.PSDTableDD.Position = obj.PSDTableDD_get_pos(fw, fh);
 				
-                obj.Ellipses_plots_len.Position = obj.Ellipses_plots_len_get_pos(fw, fh);
-                obj.Ellipses_plots_wid.Position = obj.Ellipses_plots_wid_get_pos(fw, fh);
-                obj.Ellipses_plots_sq.Position   = obj.Ellipses_plots_sq_get_pos(fw, fh);
-                obj.Ellipses_plots_Mcp.Position = obj.Ellipses_plots_Mcp_get_pos(fw, fh);
-                obj.Ellipses_plots_min.Position = obj.Ellipses_plots_min_get_pos(fw, fh);
-                obj.Ellipses_plots_max.Position = obj.Ellipses_plots_max_get_pos(fw, fh);
-                obj.Ellipses_plots_range.Position = obj.Ellipses_plots_range_get_pos(fw, fh);
-                obj.Ellipses_plots_Mo.Position   = obj.Ellipses_plots_Mo_get_pos(fw, fh);
-                obj.PSD_axes_VLF.Position = obj.PSD_axes_get_pos_VLF(fw, fh);
-                obj.PSD_axes_LF.Position = obj.PSD_axes_get_pos_LF(fw, fh);
-                obj.PSD_axes_HF.Position = obj.PSD_axes_get_pos_HF(fw, fh);
+				obj.Ellipses_plots_len.Position = obj.Ellipses_plots_len_get_pos(fw, fh);
+				obj.Ellipses_plots_wid.Position = obj.Ellipses_plots_wid_get_pos(fw, fh);
+				obj.Ellipses_plots_sq.Position   = obj.Ellipses_plots_sq_get_pos(fw, fh);
+				obj.Ellipses_plots_Mcp.Position = obj.Ellipses_plots_Mcp_get_pos(fw, fh);
+				obj.Ellipses_plots_min.Position = obj.Ellipses_plots_min_get_pos(fw, fh);
+				obj.Ellipses_plots_max.Position = obj.Ellipses_plots_max_get_pos(fw, fh);
+				obj.Ellipses_plots_range.Position = obj.Ellipses_plots_range_get_pos(fw, fh);
+				obj.Ellipses_plots_Mo.Position   = obj.Ellipses_plots_Mo_get_pos(fw, fh);
+				obj.PSD_axes_VLF.Position = obj.PSD_axes_get_pos_VLF(fw, fh);
+				obj.PSD_axes_LF.Position = obj.PSD_axes_get_pos_LF(fw, fh);
+				obj.PSD_axes_HF.Position = obj.PSD_axes_get_pos_HF(fw, fh);
+				
+				
+				obj.IndicatorsTableRR.Position = obj.IndicatorsTableRR_get_pos(fw, fh);
+				obj.IndicatorsTableSS.Position = obj.IndicatorsTableSS_get_pos(fw, fh);
+				obj.IndicatorsTableDD.Position = obj.IndicatorsTableDD_get_pos(fw, fh);
+				obj.ExportBtn.Position = obj.ExportBtn_get_pos(fw, fh);
 				
 				if ~isempty(obj.PSD_axes_legend)
 					obj.PSD_axes_legend.Location = 'best';
@@ -881,14 +1324,14 @@ classdef Viewer < handle
 		end
 		
 			function b = count_all_graphics(obj)
-                PSD_Datas = zeros(3, 2, size(obj.Power_spans_inds, 1));
-                Ellipse_Datas = zeros(8, 2, size(obj.Power_spans_inds, 1));
+                PSD_Datas = zeros(3, 3, size(obj.Power_spans_inds, 1));
+                Ellipse_Datas = zeros(8, 3, size(obj.Power_spans_inds, 1));
 
                 for n = 1 : size(obj.Power_spans_inds, 1)
                     n_begin = obj.Power_spans_inds(n, 1);
                     n_end = obj.Power_spans_inds(n, 2);
                     obj.Selected_time_span = [obj.Signals.Time(n_begin), obj.Signals.Time(n_end)];
-                    [PSD_Data, Ellipse_Data] = obj.count_for_selected_span('RRSS', false);
+                    [PSD_Data, Ellipse_Data] = obj.count_for_selected_span('RRSSDD', false);
                     
                     if isempty(PSD_Data) || isempty(Ellipse_Data)
                         errordlg("Ошибка в структуре файла", "Не все диапазоны мощности имеют размеченные систолы и R-зубцы");
@@ -900,71 +1343,310 @@ classdef Viewer < handle
                     Ellipse_Datas(:, :, n) = cell2mat(Ellipse_Data);
                 end
                 
-				% [арактеристики спектра
-                axes(obj.PSD_axes_VLF); cla; hold on; grid on;
-                stem(reshape(PSD_Datas(1, 1, :), 1, 5));
-                stem(reshape(PSD_Datas(1, 2, :), 1, 5));
+								% заполнение больших таблиц
+								
+								% ====== RR =========
+								% ell_wid
+								obj.IndicatorsTableRR.Data{1, 2} = Ellipse_Datas(2, 1, 1);
+								obj.IndicatorsTableRR.Data{2, 2} = Ellipse_Datas(2, 1, 2);
+								obj.IndicatorsTableRR.Data{3, 2} = Ellipse_Datas(2, 1, 3);
+								obj.IndicatorsTableRR.Data{4, 2} = Ellipse_Datas(2, 1, 4);
+								obj.IndicatorsTableRR.Data{5, 2} = Ellipse_Datas(2, 1, 5);
+								
+								% ell_len
+								obj.IndicatorsTableRR.Data{1, 3} = Ellipse_Datas(1, 1, 1);
+								obj.IndicatorsTableRR.Data{2, 3} = Ellipse_Datas(1, 1, 2);
+								obj.IndicatorsTableRR.Data{3, 3} = Ellipse_Datas(1, 1, 3);
+								obj.IndicatorsTableRR.Data{4, 3} = Ellipse_Datas(1, 1, 4);
+								obj.IndicatorsTableRR.Data{5, 3} = Ellipse_Datas(1, 1, 5);
+								
+								% mo
+								obj.IndicatorsTableRR.Data{1, 4} = Ellipse_Datas(8, 1, 1);
+								obj.IndicatorsTableRR.Data{2, 4} = Ellipse_Datas(8, 1, 2);
+								obj.IndicatorsTableRR.Data{3, 4} = Ellipse_Datas(8, 1, 3);
+								obj.IndicatorsTableRR.Data{4, 4} = Ellipse_Datas(8, 1, 4);
+								obj.IndicatorsTableRR.Data{5, 4} = Ellipse_Datas(8, 1, 5);
+								
+								% interv_range
+								obj.IndicatorsTableRR.Data{1, 5} = Ellipse_Datas(7, 1, 1);
+								obj.IndicatorsTableRR.Data{2, 5} = Ellipse_Datas(7, 1, 2);
+								obj.IndicatorsTableRR.Data{3, 5} = Ellipse_Datas(7, 1, 3);
+								obj.IndicatorsTableRR.Data{4, 5} = Ellipse_Datas(7, 1, 4);
+								obj.IndicatorsTableRR.Data{5, 5} = Ellipse_Datas(7, 1, 5);
+								
+								% interv_min
+								obj.IndicatorsTableRR.Data{1, 6} = Ellipse_Datas(5, 1, 1);
+								obj.IndicatorsTableRR.Data{2, 6} = Ellipse_Datas(5, 1, 2);
+								obj.IndicatorsTableRR.Data{3, 6} = Ellipse_Datas(5, 1, 3);
+								obj.IndicatorsTableRR.Data{4, 6} = Ellipse_Datas(5, 1, 4);
+								obj.IndicatorsTableRR.Data{5, 6} = Ellipse_Datas(5, 1, 5);
+								
+								% interv_max
+								obj.IndicatorsTableRR.Data{1, 7} = Ellipse_Datas(6, 1, 1);
+								obj.IndicatorsTableRR.Data{2, 7} = Ellipse_Datas(6, 1, 2);
+								obj.IndicatorsTableRR.Data{3, 7} = Ellipse_Datas(6, 1, 3);
+								obj.IndicatorsTableRR.Data{4, 7} = Ellipse_Datas(6, 1, 4);
+								obj.IndicatorsTableRR.Data{5, 7} = Ellipse_Datas(6, 1, 5);
+								
+								% square
+								obj.IndicatorsTableRR.Data{1, 8} = Ellipse_Datas(3, 1, 1);
+								obj.IndicatorsTableRR.Data{2, 8} = Ellipse_Datas(3, 1, 2);
+								obj.IndicatorsTableRR.Data{3, 8} = Ellipse_Datas(3, 1, 3);
+								obj.IndicatorsTableRR.Data{4, 8} = Ellipse_Datas(3, 1, 4);
+								obj.IndicatorsTableRR.Data{5, 8} = Ellipse_Datas(3, 1, 5);
+								
+								% m_sr
+								obj.IndicatorsTableRR.Data{1, 9} = Ellipse_Datas(4, 1, 1);
+								obj.IndicatorsTableRR.Data{2, 9} = Ellipse_Datas(4, 1, 2);
+								obj.IndicatorsTableRR.Data{3, 9} = Ellipse_Datas(4, 1, 3);
+								obj.IndicatorsTableRR.Data{4, 9} = Ellipse_Datas(4, 1, 4);
+								obj.IndicatorsTableRR.Data{5, 9} = Ellipse_Datas(4, 1, 5);
+								
+								% VLF
+								obj.IndicatorsTableRR.Data{1, 10} = PSD_Datas(1, 1, 1);
+								obj.IndicatorsTableRR.Data{2, 10} = PSD_Datas(1, 1, 2);
+								obj.IndicatorsTableRR.Data{3, 10} = PSD_Datas(1, 1, 3);
+								obj.IndicatorsTableRR.Data{4, 10} = PSD_Datas(1, 1, 4);
+								obj.IndicatorsTableRR.Data{5, 10} = PSD_Datas(1, 1, 5);
+								
+								% LF
+								obj.IndicatorsTableRR.Data{1, 11} = PSD_Datas(2, 1, 1);
+								obj.IndicatorsTableRR.Data{2, 11} = PSD_Datas(2, 1, 2);
+								obj.IndicatorsTableRR.Data{3, 11} = PSD_Datas(2, 1, 3);
+								obj.IndicatorsTableRR.Data{4, 11} = PSD_Datas(2, 1, 4);
+								obj.IndicatorsTableRR.Data{5, 11} = PSD_Datas(2, 1, 5);
+								
+								% HF
+								obj.IndicatorsTableRR.Data{1, 12} = PSD_Datas(3, 1, 1);
+								obj.IndicatorsTableRR.Data{2, 12} = PSD_Datas(3, 1, 2);
+								obj.IndicatorsTableRR.Data{3, 12} = PSD_Datas(3, 1, 3);
+								obj.IndicatorsTableRR.Data{4, 12} = PSD_Datas(3, 1, 4);
+								obj.IndicatorsTableRR.Data{5, 12} = PSD_Datas(3, 1, 5);
+								
+								
+								% ====== SS =========
+								% ell_wid
+								obj.IndicatorsTableSS.Data{1, 2} = Ellipse_Datas(2, 2, 1);
+								obj.IndicatorsTableSS.Data{2, 2} = Ellipse_Datas(2, 2, 2);
+								obj.IndicatorsTableSS.Data{3, 2} = Ellipse_Datas(2, 2, 3);
+								obj.IndicatorsTableSS.Data{4, 2} = Ellipse_Datas(2, 2, 4);
+								obj.IndicatorsTableSS.Data{5, 2} = Ellipse_Datas(2, 2, 5);
+								
+								% ell_len
+								obj.IndicatorsTableSS.Data{1, 3} = Ellipse_Datas(1, 2, 1);
+								obj.IndicatorsTableSS.Data{2, 3} = Ellipse_Datas(1, 2, 2);
+								obj.IndicatorsTableSS.Data{3, 3} = Ellipse_Datas(1, 2, 3);
+								obj.IndicatorsTableSS.Data{4, 3} = Ellipse_Datas(1, 2, 4);
+								obj.IndicatorsTableSS.Data{5, 3} = Ellipse_Datas(1, 2, 5);
+								
+								% mo
+								obj.IndicatorsTableSS.Data{1, 4} = Ellipse_Datas(8, 2, 1);
+								obj.IndicatorsTableSS.Data{2, 4} = Ellipse_Datas(8, 2, 2);
+								obj.IndicatorsTableSS.Data{3, 4} = Ellipse_Datas(8, 2, 3);
+								obj.IndicatorsTableSS.Data{4, 4} = Ellipse_Datas(8, 2, 4);
+								obj.IndicatorsTableSS.Data{5, 4} = Ellipse_Datas(8, 2, 5);
+								
+								% interv_range
+								obj.IndicatorsTableSS.Data{1, 5} = Ellipse_Datas(7, 2, 1);
+								obj.IndicatorsTableSS.Data{2, 5} = Ellipse_Datas(7, 2, 2);
+								obj.IndicatorsTableSS.Data{3, 5} = Ellipse_Datas(7, 2, 3);
+								obj.IndicatorsTableSS.Data{4, 5} = Ellipse_Datas(7, 2, 4);
+								obj.IndicatorsTableSS.Data{5, 5} = Ellipse_Datas(7, 2, 5);
+								
+								% interv_min
+								obj.IndicatorsTableSS.Data{1, 6} = Ellipse_Datas(5, 2, 1);
+								obj.IndicatorsTableSS.Data{2, 6} = Ellipse_Datas(5, 2, 2);
+								obj.IndicatorsTableSS.Data{3, 6} = Ellipse_Datas(5, 2, 3);
+								obj.IndicatorsTableSS.Data{4, 6} = Ellipse_Datas(5, 2, 4);
+								obj.IndicatorsTableSS.Data{5, 6} = Ellipse_Datas(5, 2, 5);
+								
+								% interv_max
+								obj.IndicatorsTableSS.Data{1, 7} = Ellipse_Datas(6, 2, 1);
+								obj.IndicatorsTableSS.Data{2, 7} = Ellipse_Datas(6, 2, 2);
+								obj.IndicatorsTableSS.Data{3, 7} = Ellipse_Datas(6, 2, 3);
+								obj.IndicatorsTableSS.Data{4, 7} = Ellipse_Datas(6, 2, 4);
+								obj.IndicatorsTableSS.Data{5, 7} = Ellipse_Datas(6, 2, 5);
+								
+								% square
+								obj.IndicatorsTableSS.Data{1, 8} = Ellipse_Datas(3, 2, 1);
+								obj.IndicatorsTableSS.Data{2, 8} = Ellipse_Datas(3, 2, 2);
+								obj.IndicatorsTableSS.Data{3, 8} = Ellipse_Datas(3, 2, 3);
+								obj.IndicatorsTableSS.Data{4, 8} = Ellipse_Datas(3, 2, 4);
+								obj.IndicatorsTableSS.Data{5, 8} = Ellipse_Datas(3, 2, 5);
+								
+								% m_sr
+								obj.IndicatorsTableSS.Data{1, 9} = Ellipse_Datas(4, 2, 1);
+								obj.IndicatorsTableSS.Data{2, 9} = Ellipse_Datas(4, 2, 2);
+								obj.IndicatorsTableSS.Data{3, 9} = Ellipse_Datas(4, 2, 3);
+								obj.IndicatorsTableSS.Data{4, 9} = Ellipse_Datas(4, 2, 4);
+								obj.IndicatorsTableSS.Data{5, 9} = Ellipse_Datas(4, 2, 5);
+								
+								% VLF
+								obj.IndicatorsTableSS.Data{1, 10} = PSD_Datas(1, 2, 1);
+								obj.IndicatorsTableSS.Data{2, 10} = PSD_Datas(1, 2, 2);
+								obj.IndicatorsTableSS.Data{3, 10} = PSD_Datas(1, 2, 3);
+								obj.IndicatorsTableSS.Data{4, 10} = PSD_Datas(1, 2, 4);
+								obj.IndicatorsTableSS.Data{5, 10} = PSD_Datas(1, 2, 5);
+								
+								% LF
+								obj.IndicatorsTableSS.Data{1, 11} = PSD_Datas(2, 2, 1);
+								obj.IndicatorsTableSS.Data{2, 11} = PSD_Datas(2, 2, 2);
+								obj.IndicatorsTableSS.Data{3, 11} = PSD_Datas(2, 2, 3);
+								obj.IndicatorsTableSS.Data{4, 11} = PSD_Datas(2, 2, 4);
+								obj.IndicatorsTableSS.Data{5, 11} = PSD_Datas(2, 2, 5);
+								
+								% HF
+								obj.IndicatorsTableSS.Data{1, 12} = PSD_Datas(3, 2, 1);
+								obj.IndicatorsTableSS.Data{2, 12} = PSD_Datas(3, 2, 2);
+								obj.IndicatorsTableSS.Data{3, 12} = PSD_Datas(3, 2, 3);
+								obj.IndicatorsTableSS.Data{4, 12} = PSD_Datas(3, 2, 4);
+								obj.IndicatorsTableSS.Data{5, 12} = PSD_Datas(3, 2, 5);
+								
+								% ====== DD =========
+								% ell_wid
+								obj.IndicatorsTableDD.Data{1, 2} = Ellipse_Datas(2, 3, 1);
+								obj.IndicatorsTableDD.Data{2, 2} = Ellipse_Datas(2, 3, 2);
+								obj.IndicatorsTableDD.Data{3, 2} = Ellipse_Datas(2, 3, 3);
+								obj.IndicatorsTableDD.Data{4, 2} = Ellipse_Datas(2, 3, 4);
+								obj.IndicatorsTableDD.Data{5, 2} = Ellipse_Datas(2, 3, 5);
+								
+								% ell_len
+								obj.IndicatorsTableDD.Data{1, 3} = Ellipse_Datas(1, 3, 1);
+								obj.IndicatorsTableDD.Data{2, 3} = Ellipse_Datas(1, 3, 2);
+								obj.IndicatorsTableDD.Data{3, 3} = Ellipse_Datas(1, 3, 3);
+								obj.IndicatorsTableDD.Data{4, 3} = Ellipse_Datas(1, 3, 4);
+								obj.IndicatorsTableDD.Data{5, 3} = Ellipse_Datas(1, 3, 5);
+								
+								% mo
+								obj.IndicatorsTableDD.Data{1, 4} = Ellipse_Datas(8, 3, 1);
+								obj.IndicatorsTableDD.Data{2, 4} = Ellipse_Datas(8, 3, 2);
+								obj.IndicatorsTableDD.Data{3, 4} = Ellipse_Datas(8, 3, 3);
+								obj.IndicatorsTableDD.Data{4, 4} = Ellipse_Datas(8, 3, 4);
+								obj.IndicatorsTableDD.Data{5, 4} = Ellipse_Datas(8, 3, 5);
+								
+								% interv_range
+								obj.IndicatorsTableDD.Data{1, 5} = Ellipse_Datas(7, 3, 1);
+								obj.IndicatorsTableDD.Data{2, 5} = Ellipse_Datas(7, 3, 2);
+								obj.IndicatorsTableDD.Data{3, 5} = Ellipse_Datas(7, 3, 3);
+								obj.IndicatorsTableDD.Data{4, 5} = Ellipse_Datas(7, 3, 4);
+								obj.IndicatorsTableDD.Data{5, 5} = Ellipse_Datas(7, 3, 5);
+								
+								% interv_min
+								obj.IndicatorsTableDD.Data{1, 6} = Ellipse_Datas(5, 3, 1);
+								obj.IndicatorsTableDD.Data{2, 6} = Ellipse_Datas(5, 3, 2);
+								obj.IndicatorsTableDD.Data{3, 6} = Ellipse_Datas(5, 3, 3);
+								obj.IndicatorsTableDD.Data{4, 6} = Ellipse_Datas(5, 3, 4);
+								obj.IndicatorsTableDD.Data{5, 6} = Ellipse_Datas(5, 3, 5);
+								
+								% interv_max
+								obj.IndicatorsTableDD.Data{1, 7} = Ellipse_Datas(6, 3, 1);
+								obj.IndicatorsTableDD.Data{2, 7} = Ellipse_Datas(6, 3, 2);
+								obj.IndicatorsTableDD.Data{3, 7} = Ellipse_Datas(6, 3, 3);
+								obj.IndicatorsTableDD.Data{4, 7} = Ellipse_Datas(6, 3, 4);
+								obj.IndicatorsTableDD.Data{5, 7} = Ellipse_Datas(6, 3, 5);
+								
+								% square
+								obj.IndicatorsTableDD.Data{1, 8} = Ellipse_Datas(3, 3, 1);
+								obj.IndicatorsTableDD.Data{2, 8} = Ellipse_Datas(3, 3, 2);
+								obj.IndicatorsTableDD.Data{3, 8} = Ellipse_Datas(3, 3, 3);
+								obj.IndicatorsTableDD.Data{4, 8} = Ellipse_Datas(3, 3, 4);
+								obj.IndicatorsTableDD.Data{5, 8} = Ellipse_Datas(3, 3, 5);
+								
+								% m_sr
+								obj.IndicatorsTableDD.Data{1, 9} = Ellipse_Datas(4, 3, 1);
+								obj.IndicatorsTableDD.Data{2, 9} = Ellipse_Datas(4, 3, 2);
+								obj.IndicatorsTableDD.Data{3, 9} = Ellipse_Datas(4, 3, 3);
+								obj.IndicatorsTableDD.Data{4, 9} = Ellipse_Datas(4, 3, 4);
+								obj.IndicatorsTableDD.Data{5, 9} = Ellipse_Datas(4, 3, 5);
+								
+								% VLF
+								obj.IndicatorsTableDD.Data{1, 10} = PSD_Datas(1, 3, 1);
+								obj.IndicatorsTableDD.Data{2, 10} = PSD_Datas(1, 3, 2);
+								obj.IndicatorsTableDD.Data{3, 10} = PSD_Datas(1, 3, 3);
+								obj.IndicatorsTableDD.Data{4, 10} = PSD_Datas(1, 3, 4);
+								obj.IndicatorsTableDD.Data{5, 10} = PSD_Datas(1, 3, 5);
+								
+								% LF
+								obj.IndicatorsTableDD.Data{1, 11} = PSD_Datas(2, 3, 1);
+								obj.IndicatorsTableDD.Data{2, 11} = PSD_Datas(2, 3, 2);
+								obj.IndicatorsTableDD.Data{3, 11} = PSD_Datas(2, 3, 3);
+								obj.IndicatorsTableDD.Data{4, 11} = PSD_Datas(2, 3, 4);
+								obj.IndicatorsTableDD.Data{5, 11} = PSD_Datas(2, 3, 5);
+								
+								% HF
+								obj.IndicatorsTableDD.Data{1, 12} = PSD_Datas(3, 3, 1);
+								obj.IndicatorsTableDD.Data{2, 12} = PSD_Datas(3, 3, 2);
+								obj.IndicatorsTableDD.Data{3, 12} = PSD_Datas(3, 3, 3);
+								obj.IndicatorsTableDD.Data{4, 12} = PSD_Datas(3, 3, 4);
+								obj.IndicatorsTableDD.Data{5, 12} = PSD_Datas(3, 3, 5);
+								
+				% характеристики спектра
+                axes(obj.PSD_axes_VLF); cla; hold on; grid on; 
+                stem(reshape(PSD_Datas(1, 1, :), 1, 5),'filled');
+                %stem(reshape(PSD_Datas(1, 2, :), 1, 5));
                 
                 axes(obj.PSD_axes_LF); cla; hold on; grid on;
-                stem(reshape(PSD_Datas(2, 1, :), 1, 5));
-                stem(reshape(PSD_Datas(2, 2, :), 1, 5));
+                stem(reshape(PSD_Datas(2, 1, :), 1, 5),'filled');
+                %stem(reshape(PSD_Datas(2, 2, :), 1, 5));
                 
                 axes(obj.PSD_axes_HF); cla; hold on; grid on;
-                stem(reshape(PSD_Datas(3, 1, :), 1, 5));
-                stem(reshape(PSD_Datas(3, 2, :), 1, 5));
-                obj.PSD_axes_legend = legend(["VLF ЭКГ", "VLF АД", "LF ЭКГ", "LF АД", "HF ЭКГ", "HF АД"], ...
-                    'Location', 'best');
+                stem(reshape(PSD_Datas(3, 1, :), 1, 5),'filled');
+                %stem(reshape(PSD_Datas(3, 2, :), 1, 5));
+                %obj.PSD_axes_legend = legend(["VLF ЭКГ", "VLF АД", "LF ЭКГ", "LF АД", "HF ЭКГ", "HF АД"], ...
+                    %'Location', 'best');
                 
-				% [арактеристики 'ллипсов
+				% характеристики эллипсов
                 axes(obj.Ellipses_plots_len); cla; hold on; grid on;        
-                stem(reshape(Ellipse_Datas(1, 1, :), 1, 5));
-                stem(reshape(Ellipse_Datas(1, 2, :), 1, 5));
+                stem(reshape(Ellipse_Datas(1, 1, :), 1, 5),'filled');
+                %stem(reshape(Ellipse_Datas(1, 2, :), 1, 5));
                 
                 axes(obj.Ellipses_plots_wid); cla; grid on; hold on;
-                stem(reshape(Ellipse_Datas(2, 1, :), 1, 5));
-                stem(reshape(Ellipse_Datas(2, 2, :), 1, 5));
+                stem(reshape(Ellipse_Datas(2, 1, :), 1, 5),'filled');
+                %stem(reshape(Ellipse_Datas(2, 2, :), 1, 5));
 
                 axes(obj.Ellipses_plots_sq); cla; grid on; hold on;
-                stem(reshape(Ellipse_Datas(3, 1, :), 1, 5));
-                stem(reshape(Ellipse_Datas(3, 2, :), 1, 5));
+                stem(reshape(Ellipse_Datas(3, 1, :), 1, 5),'filled');
+                %stem(reshape(Ellipse_Datas(3, 2, :), 1, 5));
 
                 axes(obj.Ellipses_plots_Mcp); cla; grid on; hold on;
-                stem(reshape(Ellipse_Datas(4, 1, :), 1, 5));
-                stem(reshape(Ellipse_Datas(4, 2, :), 1, 5));
+                stem(reshape(Ellipse_Datas(4, 1, :), 1, 5),'filled');
+                %stem(reshape(Ellipse_Datas(4, 2, :), 1, 5));
 
                 axes(obj.Ellipses_plots_min); cla; grid on; hold on;
-                stem(reshape(Ellipse_Datas(5, 1, :), 1, 5));
-                stem(reshape(Ellipse_Datas(5, 2, :), 1, 5));
+                stem(reshape(Ellipse_Datas(5, 1, :), 1, 5),'filled');
+                %stem(reshape(Ellipse_Datas(5, 2, :), 1, 5));
 
                 axes(obj.Ellipses_plots_max); cla; grid on; hold on;
-                stem(reshape(Ellipse_Datas(6, 1, :), 1, 5));
-                stem(reshape(Ellipse_Datas(6, 2, :), 1, 5));
+                stem(reshape(Ellipse_Datas(6, 1, :), 1, 5),'filled');
+                %stem(reshape(Ellipse_Datas(6, 2, :), 1, 5));
 
                 axes(obj.Ellipses_plots_range); cla; grid on; hold on;
-                stem(reshape(Ellipse_Datas(7, 1, :), 1, 5));
-                stem(reshape(Ellipse_Datas(7, 2, :), 1, 5));
+                stem(reshape(Ellipse_Datas(7, 1, :), 1, 5),'filled');
+                %stem(reshape(Ellipse_Datas(7, 2, :), 1, 5));
 
                 axes(obj.Ellipses_plots_Mo); cla; grid on; hold on;        
-                stem(reshape(Ellipse_Datas(8, 1, :), 1, 5));
-                stem(reshape(Ellipse_Datas(8, 2, :), 1, 5));
+                stem(reshape(Ellipse_Datas(8, 1, :), 1, 5),'filled');
+                %stem(reshape(Ellipse_Datas(8, 2, :), 1, 5));
                 
-                obj.Ellipses_plots_legend = legend([ ...
-                    "Длина облака ЭКГ, мс",     "Длина облака АД, мс", ...
-                    "Ширина облака ЭКГ, мс",    "Ширина облака АД, мс", ...
-                    "Площадь облака ЭКГ, мс^2", "Площадь облака АД, мс^2", ...
-                    "Мср ЭКГ, мс",              "Мср АД, мс", ...
-                    "RR(SS)_min ЭКГ, мс",       "RR(SS)_min АД, мс", ...
-                    "RR(SS)_max ЭКГ, мс",       "RR(SS)_max АД, мс", ...
-                    "Размах RR(SS) ЭКГ, мс",    "Размах RR(SS) АД, мс", ...
-                    "Mo ЭКГ, мс",               "Mo АД, мс" ...
-                ], ...
-                    'Location', 'best', 'NumColumns', 5);
+%                 obj.Ellipses_plots_legend = legend([ ...
+%                     "Длина облака ЭКГ, мс",     
+%                     "Ширина облака ЭКГ, мс",    
+%                     "Площадь облака ЭКГ, мс^2", 
+%                     "Мср ЭКГ, мс",              
+%                     "RR(SS)_min ЭКГ, мс",       
+%                     "RR(SS)_max ЭКГ, мс",       
+%                     "Размах RR(SS) ЭКГ, мс",    
+%                     "Mo ЭКГ, мс",               
+%                 ], ...
+%                     'Location', 'best', 'NumColumns', 5);
+
+				...
 
                 n_begin = obj.Power_spans_inds(n, 1);
                 n_end = obj.Power_spans_inds(n, 2);
                 obj.Selected_time_span = [obj.Signals.Time(n_begin), obj.Signals.Time(n_end)];
                 obj.draw_ritmograms_and_power(1);
-                obj.count_for_selected_span('RRSS', true);
+                obj.count_for_selected_span('RRSSDD', true);
                 
                 b = true;
 			end
@@ -998,7 +1680,8 @@ classdef Viewer < handle
 							obj.Signals, ...
 							[obj.Signals.Time(1), obj.Signals.Time(end)], ...
 							obj.RR_max_diff, ...
-							obj.SS_max_diff);
+							obj.SS_max_diff, ...
+							obj.DD_max_diff);
 
 					axes(obj.RG_ECG_axes); cla; hold on; grid on;
 					stem(RRx, RRy, '.');
@@ -1054,30 +1737,154 @@ classdef Viewer < handle
 							if n_begin <= time_ind && time_ind <= n_end
 									obj.Selected_time_span = [obj.Signals.Time(n_begin), obj.Signals.Time(n_end)];
 									obj.draw_ritmograms_and_power(span_ind);
+									obj.count_for_selected_span('RRSSDD', true);
 									break;
 							end
-					end
-							
-					obj.count_for_selected_span('RRSS', true);
+					end	
 			end
 
 			function change_intervals_max_diff(obj, s, signal_name)
 					value = str2double(s.String);
-					if isnan(value) || value < 0 || value > 100
-							errordlg('Необходимо ввести дробное число от 0 до 1');
+					if isnan(value)
+							errordlg('Необходимо ввести число');
 							return;
 					end
 					
 					if strcmp(signal_name, 'RR')
+							if value < 0 || value > 100
+									errordlg('Необходимо ввести дробное число от 0 до 100');
+									return;
+							end
 							obj.RR_max_diff = value / 100;
 					elseif strcmp(signal_name, 'SS')
-							obj.SS_max_diff = value / 100;
+							if value < 0 || value > 10
+									errordlg('Необходимо ввести целое число от 0 до 10');
+									return;
+							end
+							obj.SS_max_diff = value;
+					elseif strcmp(signal_name, 'DD')
+							if value < 0 || value > 10
+									errordlg('Необходимо ввести целое число от 0 до 10');
+									return;
+							end
+							obj.DD_max_diff = value;
 					else
 							assert(false);
 					end
 					
 					obj.count_for_selected_span(signal_name, true);
 			end
+
+        function on_export_btn_click(obj)
+            [file, path] = uiputfile('*.xlsx', 'Экспорт', [obj.Signals.Name, ' export']);
+            
+            if isfloat(file) || isfloat(path)
+                return;
+            end
+            
+            filename = [path, file];
+        
+            range = 'A1:L6';
+						
+            writetable( ...
+                table( ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 1), ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 2), ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 3), ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 4), ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 5), ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 6), ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 7), ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 8), ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 9), ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 10), ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 11), ...
+                    obj.IndicatorsTableRR.Data(1 : 5, 12), ...
+                    'VariableNames', { ...
+											'№ этапа', ...
+											'Ширина облака, мс', ...
+											'Длина облака, мс', ...
+											'Mo, мс', ...
+											'Размах RR, мс', ...
+											'RR мин мс', ...
+											'RR макс мс', ...
+											'Площадь облака, мс^2', ...
+											'Мср, мс', ...
+											'VLF', ...
+											'LF', ...
+											'HF', ...
+									} ...
+                ), ...
+                filename, ...
+                'Sheet', 'RR', ...
+                'Range', range);
+						
+            writetable( ...
+                table( ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 1), ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 2), ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 3), ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 4), ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 5), ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 6), ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 7), ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 8), ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 9), ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 10), ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 11), ...
+                    obj.IndicatorsTableSS.Data(1 : 5, 12), ...
+                    'VariableNames', { ...
+											'№ этапа', ...
+											'Ширина облака, мм рт. ст.', ...
+											'Длина облака, мм рт. ст.', ...
+											'Mo, мм рт. ст.', ...
+											'Размах SS, мм рт. ст.', ...
+											'SS мин, мм рт. ст.', ...
+											'SS макс, мм рт. ст.', ...
+											'Площадь облака, (мм рт. ст.)^2', ...
+											'Мср, мм рт. ст.', ...
+											'VLF, (мм рт. ст.)^2', ...
+											'LF, (мм рт. ст.)^2', ...
+											'HF, (мм рт. ст.)^2', ...
+									} ...
+                ), ...
+                filename, ...
+                'Sheet', 'SS', ...
+                'Range', range);
+						
+            writetable( ...
+                table( ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 1), ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 2), ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 3), ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 4), ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 5), ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 6), ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 7), ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 8), ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 9), ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 10), ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 11), ...
+                    obj.IndicatorsTableDD.Data(1 : 5, 12), ...
+                    'VariableNames', { ...
+											'№ этапа', ...
+											'Ширина облака, мм рт. ст.', ...
+											'Длина облака, мм рт. ст.', ...
+											'Mo, мм рт. ст.', ...
+											'Размах SS, мм рт. ст.', ...
+											'SS мин, мм рт. ст.', ...
+											'SS макс, мм рт. ст.', ...
+											'Площадь облака, (мм рт. ст.)^2', ...
+											'Мср, мм рт. ст.', ...
+											'VLF, (мм рт. ст.)^2', ...
+											'LF, (мм рт. ст.)^2', ...
+											'HF, (мм рт. ст.)^2', ...
+									} ...
+                ), ...
+                filename, ...
+                'Sheet', 'DD', ...
+                'Range', range);
+        end
 
         function [PSD_Data, Ellipse_Data] = count_for_selected_span(obj, to_recount, do_plotting)									
             if isempty(obj.Selected_time_span)
@@ -1091,26 +1898,29 @@ classdef Viewer < handle
                 obj.edit_max_diff_RR.Enable = 'on';
                 obj.text_max_diff_SS.Enable = 'on';
                 obj.edit_max_diff_SS.Enable = 'on';
+				obj.text_max_diff_DD.Enable = 'on';
+                obj.edit_max_diff_DD.Enable = 'on';
             end
 
             t = obj.Signals.Time;
 
             t_span = t(t >= obj.Selected_time_span(1) & t <= obj.Selected_time_span(2));
 
-            [RRx, RRy, SSx, SSy, RRx_old, RRy_old, SSx_old, SSy_old] = calc_ritmogramms( ...
+            [RRx, RRy, SSx, SSy, DDx, DDy, RRx_old, RRy_old, SSx_old, SSy_old, DDx_old, DDy_old] = calc_ritmogramms( ...
                     obj.Signals, ...
                     t_span, ...
                     obj.RR_max_diff, ...
-                    obj.SS_max_diff);
+                    obj.SS_max_diff,...
+                    obj.DD_max_diff);
                 
-            if isempty(RRx) || isempty(RRy) || isempty(SSx) || isempty(SSy)
+            if isempty(RRx) || isempty(RRy) || isempty(SSx) || isempty(SSy) || isempty(DDx) || isempty(DDy)
                 PSD_Data = [];
                 Ellipse_Data = [];
                 return;
             end
 
-            [RRpsd_f, RRpsd, SSpsd_f, SSpsd, CPSD, CPSD_f, RR_VLF, RR_LF, RR_HF, SS_VLF, SS_LF, SS_HF] = calc_psd_welch_an_cpsd( ...
-                    t_span, RRx, RRy, SSx, SSy);
+            [RRpsd_f, RRpsd, SSpsd_f, SSpsd, DDpsd_f, DDpsd, CPSD, CPSD_f, RR_VLF, RR_LF, RR_HF, SS_VLF, SS_LF, SS_HF, DD_VLF, DD_LF, DD_HF] = calc_psd_welch_an_cpsd( ...
+                    t_span, RRx, RRy, SSx, SSy, DDx, DDy);
 
             Ellipse_Data = obj.EllipseTable.Data(:, 2 : end);
 
@@ -1130,7 +1940,6 @@ classdef Viewer < handle
                     axes(obj.RRscatter); cla; hold on; grid on;
                     plot(RRy_old(1 : end - 1), RRy_old(2 : end), '.k');
                     plot(RRy(1 : end - 1), RRy(2 : end), 'ob');
-                    plot(sc_x, sc_y, '.b');
                     obj.h_RR_a = plot(ax, ay, 'c', 'LineWidth', 2);
                     obj.h_RR_b = plot(bx, by, 'm', 'LineWidth', 2);
                     obj.h_RR_ellipse = plot(el_x, el_y, 'r', 'LineWidth', 2);
@@ -1139,12 +1948,10 @@ classdef Viewer < handle
                     obj.drag_point_RR_b = obj.drag_point_RR_b.Draw(bx(end), by(end));
                     obj.drag_point_RR_center = obj.drag_point_RR_center.Draw(x0, y0);    
 
-                    range_x = max(sc_x) - min(sc_x);
-                    range_y = max(sc_y) - min(sc_y);
-                    range = max(range_x, range_y);
+                    range = max(RRy_old) - min(RRy_old);
 
-                    xlim([min(sc_x) - range * 0.4, min(sc_x) + range * 1.4]);
-                    ylim([min(sc_y) - range * 0.4, min(sc_y) + range * 1.4]);
+                    xlim([min(RRy_old) - range * 0.4, min(RRy_old) + range * 1.4]);
+                    ylim([min(RRy_old) - range * 0.4, min(RRy_old) + range * 1.4]);
                 end
 
                 Ellipse_Data{1, 1} = 1000 * el_params_RR.ell_len;
@@ -1164,8 +1971,8 @@ classdef Viewer < handle
                     axes(obj.SSrg_axes); cla; hold on; grid on;
                     stem(SSx_old, SSy_old, '.');
                     stem(SSx, SSy, '.');
-                    xlabel('Время, с');
-                    ylabel('Длительность, с');
+                    xlabel('Давление, мм рт. ст.');
+                    ylabel('Давление, мм рт. ст.');
 
                     axes(obj.SSpsd_axes); cla; hold on; grid on;
                     plot(SSpsd_f, SSpsd);
@@ -1176,7 +1983,6 @@ classdef Viewer < handle
                     axes(obj.SSscatter); cla; hold on; grid on;
                     plot(SSy_old(1 : end - 1), SSy_old(2 : end), '.k');
                     plot(SSy(1 : end - 1), SSy(2 : end), 'ob');
-                    plot(sc_x, sc_y, '.b');
                     obj.h_SS_a = plot(ax, ay, 'c', 'LineWidth', 2);
                     obj.h_SS_b = plot(bx, by, 'm', 'LineWidth', 2);
                     obj.h_SS_ellipse = plot(el_x, el_y, 'r', 'LineWidth', 2);
@@ -1185,39 +1991,92 @@ classdef Viewer < handle
                     obj.drag_point_SS_b = obj.drag_point_SS_b.Draw(bx(end), by(end));
                     obj.drag_point_SS_center = obj.drag_point_SS_center.Draw(x0, y0);   
 
-                    range_x = max(sc_x) - min(sc_x);
-                    range_y = max(sc_y) - min(sc_y);
-                    range = max(range_x, range_y);
+                    range = max(SSy_old) - min(SSy_old);
 
-                    xlim([min(sc_x) - range * 0.4, min(sc_x) + range * 1.4]);
-                    ylim([min(sc_y) - range * 0.4, min(sc_y) + range * 1.4]);
+                    xlim([min(SSy_old) - range * 0.4, min(SSy_old) + range * 1.4]);
+                    ylim([min(SSy_old) - range * 0.4, min(SSy_old) + range * 1.4]);
                 end
 
-                Ellipse_Data{1, 2} = 1000 * el_params_SS.ell_len;
-                Ellipse_Data{2, 2} = 1000 * el_params_SS.ell_wid;
-                Ellipse_Data{3, 2} = 1000 * 1000 * el_params_SS.square;
-                Ellipse_Data{4, 2} = 1000 * el_params_SS.m_sr;
-                Ellipse_Data{5, 2} = 1000 * el_params_SS.interv_min;
-                Ellipse_Data{6, 2} = 1000 * el_params_SS.interv_max;
-                Ellipse_Data{7, 2} = 1000 * el_params_SS.interv_range;
-                Ellipse_Data{8, 2} = 1000 * el_params_SS.mo;
+                Ellipse_Data{1, 2} = el_params_SS.ell_len;
+                Ellipse_Data{2, 2} = el_params_SS.ell_wid;
+                Ellipse_Data{3, 2} = el_params_SS.square;
+                Ellipse_Data{4, 2} = el_params_SS.m_sr;
+                Ellipse_Data{5, 2} = el_params_SS.interv_min;
+                Ellipse_Data{6, 2} = el_params_SS.interv_max;
+                Ellipse_Data{7, 2} = el_params_SS.interv_range;
+                Ellipse_Data{8, 2} = el_params_SS.mo;
             end
+			
+			if contains(to_recount, 'DD')
+                [sc_x, sc_y, el_x, el_y, el_params_DD, ax, ay, bx, by, x0, y0] = calc_scatter_ellipse(DDy);
 
+                if do_plotting
+                    axes(obj.DDrg_axes); cla; hold on; grid on;
+                    stem(DDx_old, DDy_old, '.b');
+                    stem(DDx, DDy, '.r');
+                    xlabel('Давление, мм рт. ст.');
+                    ylabel('Давление, мм рт. ст.');
+
+                    axes(obj.DDpsd_axes); cla; hold on; grid on;
+                    plot(DDpsd_f, DDpsd);
+
+                    axes(obj.CPSD_axes); cla; hold on; grid on;
+                    plot(CPSD_f, CPSD);
+
+                    axes(obj.DDscatter); cla; hold on; grid on;
+                    plot(DDy_old(1 : end - 1), DDy_old(2 : end), '.k');
+                    plot(DDy(1 : end - 1), DDy(2 : end), 'ob');
+                    obj.h_DD_a = plot(ax, ay, 'c', 'LineWidth', 2);
+                    obj.h_DD_b = plot(bx, by, 'm', 'LineWidth', 2);
+                    obj.h_DD_ellipse = plot(el_x, el_y, 'r', 'LineWidth', 2);
+
+                    obj.drag_point_DD_a = obj.drag_point_DD_a.Draw(ax(end), ay(end));
+                    obj.drag_point_DD_b = obj.drag_point_DD_b.Draw(bx(end), by(end));
+                    obj.drag_point_DD_center = obj.drag_point_DD_center.Draw(x0, y0);   
+
+                    range = max(DDy_old) - min(DDy_old);
+
+                    xlim([min(DDy_old) - range * 0.4, min(DDy_old) + range * 1.4]);
+                    ylim([min(DDy_old) - range * 0.4, min(DDy_old) + range * 1.4]);
+                end
+
+                Ellipse_Data{1, 3} = el_params_DD.ell_len;
+                Ellipse_Data{2, 3} = el_params_DD.ell_wid;
+                Ellipse_Data{3, 3} = el_params_DD.square;
+                Ellipse_Data{4, 3} = el_params_DD.m_sr;
+                Ellipse_Data{5, 3} = el_params_DD.interv_min;
+                Ellipse_Data{6, 3} = el_params_DD.interv_max;
+                Ellipse_Data{7, 3} = el_params_DD.interv_range;
+                Ellipse_Data{8, 3} = el_params_DD.mo;
+            end
+			
             if do_plotting
                 obj.EllipseTable.Data(:, 2 : end) = Ellipse_Data;
             end
+						
+						PSD_Data = cell(3, 3);
 
-            PSD_Data = obj.PSDTable.Data(:, 2 : end);
             PSD_Data{1, 1} = RR_VLF;
-            PSD_Data{1, 2} = SS_VLF;
             PSD_Data{2, 1} = RR_LF;
-            PSD_Data{2, 2} = SS_LF;
             PSD_Data{3, 1} = RR_HF;
+						
+            PSD_Data{1, 2} = SS_VLF;
+            PSD_Data{2, 2} = SS_LF;
             PSD_Data{3, 2} = SS_HF;
+						
+            PSD_Data{1, 3} = DD_VLF;
+            PSD_Data{2, 3} = DD_LF;
+            PSD_Data{3, 3} = DD_HF;
 
             if do_plotting
-                obj.PSDTable.Data(:, 2 : end) = PSD_Data;
-                obj.PSDTable.ColumnWidth = 'fit';
+                obj.PSDTableRR.Data(:, 2) = PSD_Data(:, 1);
+                obj.PSDTableRR.ColumnWidth = 'fit';
+								
+                obj.PSDTableSS.Data(:, 2) = PSD_Data(:, 2);
+                obj.PSDTableSS.ColumnWidth = 'fit';
+								
+                obj.PSDTableDD.Data(:, 2) = PSD_Data(:, 3);
+                obj.PSDTableDD.ColumnWidth = 'fit';
             end
         end
     end

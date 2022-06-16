@@ -12,7 +12,6 @@ function inds_matrix = find_power_spans(Td, power)
     
     inds_matrix = zeros(0, 2);
     
-    % Если вначале сигнала мощность подходит порогу, добавляем это начало
     if power(1) >= min_power && power_change_moments(1) > 1
         power_change_moments = [1; power_change_moments];
     end
@@ -22,7 +21,6 @@ function inds_matrix = find_power_spans(Td, power)
         return;
     end
     
-    % Ищем конец последнего промежутка
     last_n = power_change_moments(end);
     last_span_end = find(power_diff(last_n : end) < 0, 1);
     power_change_moments = [power_change_moments; last_span_end + last_n - 1];
@@ -31,12 +29,10 @@ function inds_matrix = find_power_spans(Td, power)
         n_begin = power_change_moments(n);
         n_end = power_change_moments(n + 1);
         
-        % пропустим промежуток, который меньше пропускаемого вначале времени
         if n_end - n_begin <= skip_points_count
             continue;
         end
         
-        % пропустим момент, который по уровню мощности меньше 40Вт
         n_middle = round((n_begin + n_end) / 2);
         if power(n_middle) < min_power
            continue; 
